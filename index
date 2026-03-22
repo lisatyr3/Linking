@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find the Link</title>
+
+<style>
+body{
+font-family:Arial;
+background:#f3f4f4;
+padding:16px;
+margin:0;
+}
+
+.wrap{
+max-width:700px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:20px;
+box-shadow:0 3px 10px rgba(0,0,0,.1);
+text-align:center;
+}
+
+h1{color:#2d8a78;}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin-top:20px;
+}
+
+.word{
+padding:14px;
+background:#e5e5e5;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.selected{
+background:#2d8a78;
+color:white;
+}
+
+.correct{
+background:#8bc34a;
+color:white;
+}
+
+button{
+margin-top:20px;
+padding:12px 18px;
+border:none;
+border-radius:8px;
+background:#2d8a78;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+.message{
+margin-top:15px;
+font-weight:bold;
+font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<h1>Find the Link</h1>
+<p>Select 4 words that belong together.</p>
+
+<div class="grid" id="grid"></div>
+
+<button onclick="submitGroup()">Submit Group</button>
+
+<div class="message" id="message"></div>
+
+</div>
+
+<script>
+
+/* PUZZLE */
+
+const puzzle = {
+groups: [
+["ROSE","LILY","TULIP","DAISY"],
+["DOG","CAT","HORSE","COW"],
+["RED","BLUE","GREEN","YELLOW"],
+["CHAIR","TABLE","COUCH","BED"]
+]
+};
+
+/* SETUP */
+
+let words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
+let selected = [];
+let solved = [];
+
+function draw(){
+
+let gridHTML = "";
+
+words.forEach(word=>{
+
+let cls = "word";
+
+if(selected.includes(word)) cls += " selected";
+if(solved.includes(word)) cls += " correct";
+
+gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
+
+});
+
+document.getElementById("grid").innerHTML = gridHTML;
+
+}
+
+function toggle(word){
+
+if(solved.includes(word)) return;
+
+if(selected.includes(word)){
+selected = selected.filter(w=>w!==word);
+}else{
+if(selected.length < 4){
+selected.push(word);
+}
+}
+
+draw();
+
+}
+
+/* CHECK */
+
+function submitGroup(){
+
+if(selected.length !== 4){
+document.getElementById("message").textContent = "Select 4 words";
+return;
+}
+
+let isCorrect = puzzle.groups.some(group =>
+group.every(word => selected.includes(word))
+);
+
+if(isCorrect){
+
+selected.forEach(w => solved.push(w));
+
+document.getElementById("message").textContent = "Nice! Keep going";
+
+selected = [];
+
+if(solved.length === 16){
+document.getElementById("message").innerHTML = `
+🎉 You solved it!<br>
+<button onclick="location.reload()">Play Again</button>
+`;
+}
+
+}else{
+document.getElementById("message").textContent = "Try again";
+selected = [];
+}
+
+draw();
+
+}
+
+draw();
+
+</script>
+
+</body>
+</html>
