@@ -86,44 +86,278 @@ font-size:18px;
 
 <script>
 
-/* PUZZLE */
+/* 30 PUZZLES */
 
-const puzzle = {
-groups: [
+const puzzles = [
+
+{
+groups:[
 ["ROSE","LILY","TULIP","DAISY"],
 ["DOG","CAT","HORSE","COW"],
 ["RED","BLUE","GREEN","YELLOW"],
 ["CHAIR","TABLE","COUCH","BED"]
 ]
-};
+},
 
-/* SETUP */
+{
+groups:[
+["APPLE","PEAR","PLUM","PEACH"],
+["CAR","TRUCK","VAN","SUV"],
+["SOFA","CHAIR","DESK","TABLE"],
+["RUN","WALK","JOG","SPRINT"]
+]
+},
 
+{
+groups:[
+["MERCURY","VENUS","EARTH","MARS"],
+["GOLD","SILVER","IRON","COPPER"],
+["SPRING","SUMMER","FALL","WINTER"],
+["JUMP","HOP","LEAP","BOUND"]
+]
+},
+
+{
+groups:[
+["SHIRT","PANTS","DRESS","SKIRT"],
+["SPOON","FORK","KNIFE","PLATE"],
+["PEN","PENCIL","MARKER","CRAYON"],
+["DOG","BARK","TAIL","LEASH"]
+]
+},
+
+{
+groups:[
+["MILK","CHEESE","BUTTER","YOGURT"],
+["BREAD","RICE","PASTA","OATS"],
+["APPLE","BANANA","ORANGE","GRAPE"],
+["WATER","JUICE","TEA","COFFEE"]
+]
+},
+
+{
+groups:[
+["SUN","MOON","STAR","PLANET"],
+["OCEAN","RIVER","LAKE","STREAM"],
+["MOUNTAIN","HILL","VALLEY","CLIFF"],
+["RAIN","SNOW","WIND","FOG"]
+]
+},
+
+{
+groups:[
+["MONDAY","TUESDAY","WEDNESDAY","THURSDAY"],
+["JANUARY","FEBRUARY","MARCH","APRIL"],
+["SPRING","SUMMER","FALL","WINTER"],
+["MORNING","NOON","EVENING","NIGHT"]
+]
+},
+
+{
+groups:[
+["DOCTOR","NURSE","TEACHER","CHEF"],
+["HAMMER","SCREWDRIVER","WRENCH","DRILL"],
+["CAR","BIKE","TRAIN","PLANE"],
+["SHOE","BOOT","SANDAL","SNEAKER"]
+]
+},
+
+{
+groups:[
+["BEEF","CHICKEN","PORK","TURKEY"],
+["CARROT","POTATO","ONION","PEPPER"],
+["SALT","SUGAR","FLOUR","SPICE"],
+["BAKE","FRY","BOIL","GRILL"]
+]
+},
+
+{
+groups:[
+["BOOK","MAGAZINE","NEWSPAPER","JOURNAL"],
+["TV","RADIO","PHONE","TABLET"],
+["MOVIE","SHOW","SONG","PODCAST"],
+["WRITE","READ","WATCH","LISTEN"]
+]
+},
+
+{
+groups:[
+["BANK","STORE","POST","LIBRARY"],
+["SCHOOL","COLLEGE","CLASS","LESSON"],
+["CHURCH","TEMPLE","MOSQUE","SHRINE"],
+["HOME","HOUSE","APARTMENT","CONDO"]
+]
+},
+
+{
+groups:[
+["BASEBALL","FOOTBALL","BASKETBALL","SOCCER"],
+["RUN","SWIM","JUMP","THROW"],
+["BALL","BAT","NET","GOAL"],
+["TEAM","COACH","PLAYER","GAME"]
+]
+},
+
+{
+groups:[
+["DOG","CAT","FISH","BIRD"],
+["LION","TIGER","BEAR","WOLF"],
+["HORSE","COW","SHEEP","GOAT"],
+["MOUSE","RAT","SQUIRREL","RABBIT"]
+]
+},
+
+{
+groups:[
+["HAPPY","SAD","ANGRY","CALM"],
+["FAST","SLOW","QUICK","RAPID"],
+["BIG","SMALL","TALL","SHORT"],
+["HOT","COLD","WARM","COOL"]
+]
+},
+
+{
+groups:[
+["BED","PILLOW","BLANKET","SHEET"],
+["SOAP","SHAMPOO","TOWEL","BRUSH"],
+["SINK","TOILET","SHOWER","TUB"],
+["DOOR","WINDOW","WALL","FLOOR"]
+]
+},
+
+{
+groups:[
+["GUITAR","PIANO","DRUM","VIOLIN"],
+["ROCK","JAZZ","COUNTRY","POP"],
+["SONG","ALBUM","BAND","SINGER"],
+["DANCE","SING","PLAY","LISTEN"]
+]
+},
+
+{
+groups:[
+["SAND","SEA","SUN","SHELL"],
+["BEACH","TOWEL","CHAIR","UMBRELLA"],
+["SWIM","FLOAT","DIVE","SPLASH"],
+["HOT","BRIGHT","CLEAR","BLUE"]
+]
+},
+
+{
+groups:[
+["FIRE","WATER","AIR","EARTH"],
+["WOOD","METAL","STONE","GLASS"],
+["LIGHT","DARK","SHADOW","GLOW"],
+["HEAT","COLD","WIND","RAIN"]
+]
+},
+
+{
+groups:[
+["KING","QUEEN","PRINCE","PRINCESS"],
+["CASTLE","CROWN","THRONE","KNIGHT"],
+["DRAGON","SWORD","MAGIC","QUEST"],
+["FAIRY","WITCH","SPELL","POTION"]
+]
+},
+
+{
+groups:[
+["CAR","GAS","ROAD","DRIVE"],
+["PLANE","FLY","AIR","TRIP"],
+["TRAIN","TRACK","RAIL","STOP"],
+["SHIP","SEA","PORT","SAIL"]
+]
+},
+
+{
+groups:[
+["PHONE","TEXT","CALL","APP"],
+["EMAIL","SEND","INBOX","MESSAGE"],
+["TV","SHOW","CHANNEL","REMOTE"],
+["BOOK","PAGE","READ","CHAPTER"]
+]
+},
+
+{
+groups:[
+["COLD","FLU","COUGH","FEVER"],
+["DOCTOR","VISIT","CHECK","TEST"],
+["MEDICINE","PILL","DOSE","DRUG"],
+["REST","SLEEP","HEAL","RECOVER"]
+]
+},
+
+{
+groups:[
+["BREAKFAST","LUNCH","DINNER","SNACK"],
+["EGG","TOAST","BACON","COFFEE"],
+["SOUP","SALAD","SANDWICH","PIZZA"],
+["STEAK","CHICKEN","FISH","RICE"]
+]
+},
+
+{
+groups:[
+["RAIN","STORM","CLOUD","THUNDER"],
+["SUN","HEAT","LIGHT","SKY"],
+["WIND","BREEZE","GUST","AIR"],
+["SNOW","ICE","COLD","FREEZE"]
+]
+},
+
+{
+groups:[
+["MAP","COMPASS","DIRECTION","NORTH"],
+["ROAD","TRIP","DRIVE","ROUTE"],
+["HOTEL","ROOM","STAY","BOOK"],
+["BAG","PACK","TRAVEL","FLIGHT"]
+]
+},
+
+{
+groups:[
+["KEY","LOCK","DOOR","OPEN"],
+["CODE","PASSWORD","LOGIN","ACCESS"],
+["SAFE","VAULT","SECURE","PROTECT"],
+["ALARM","BELL","SOUND","ALERT"]
+]
+},
+
+{
+groups:[
+["TIME","CLOCK","WATCH","HOUR"],
+["DAY","WEEK","MONTH","YEAR"],
+["PAST","PRESENT","FUTURE","NOW"],
+["EARLY","LATE","SOON","LATER"]
+]
+}
+
+];
+
+/* GAME */
+
+let puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
 let words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
 let selected = [];
 let solved = [];
 
 function draw(){
-
 let gridHTML = "";
 
 words.forEach(word=>{
-
 let cls = "word";
 
 if(selected.includes(word)) cls += " selected";
 if(solved.includes(word)) cls += " correct";
 
 gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
-
 });
 
 document.getElementById("grid").innerHTML = gridHTML;
-
 }
 
 function toggle(word){
-
 if(solved.includes(word)) return;
 
 if(selected.includes(word)){
@@ -133,12 +367,8 @@ if(selected.length < 4){
 selected.push(word);
 }
 }
-
 draw();
-
 }
-
-/* CHECK */
 
 function submitGroup(){
 
@@ -154,16 +384,15 @@ group.every(word => selected.includes(word))
 if(isCorrect){
 
 selected.forEach(w => solved.push(w));
-
-document.getElementById("message").textContent = "Nice! Keep going";
-
 selected = [];
 
 if(solved.length === 16){
 document.getElementById("message").innerHTML = `
 🎉 You solved it!<br>
-<button onclick="location.reload()">Play Again</button>
+<button onclick="nextPuzzle()">Play Another Puzzle</button>
 `;
+}else{
+document.getElementById("message").textContent = "Nice! Keep going";
 }
 
 }else{
@@ -172,7 +401,15 @@ selected = [];
 }
 
 draw();
+}
 
+function nextPuzzle(){
+puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
+words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
+selected = [];
+solved = [];
+document.getElementById("message").textContent="";
+draw();
 }
 
 draw();
