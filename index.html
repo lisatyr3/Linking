@@ -12,7 +12,7 @@ button { padding: 12px; margin: 6px; border-radius: 10px; border: none; cursor: 
 .wrong { background: #f44336; color: white; }
 .hidden { display: none; }
 #question { font-size: 22px; margin: 20px 0; white-space: pre-line; }
-#missedList { text-align:left; }
+#missedList { text-align:left; margin-top:20px; }
 </style>
 </head>
 
@@ -37,7 +37,6 @@ button { padding: 12px; margin: 6px; border-radius: 10px; border: none; cursor: 
 <h3 id="modeLabel"></h3>
 <div id="progress"></div>
 <div id="question"></div>
-
 <div id="answers"></div>
 <button onclick="nextQuestion()">Next</button>
 <button onclick="home()">Home</button>
@@ -47,113 +46,174 @@ button { padding: 12px; margin: 6px; border-radius: 10px; border: none; cursor: 
 <h2>Results</h2>
 <div id="resultScore"></div>
 <div id="resultPercent"></div>
+<div id="resultStatus"></div>
+
+<h3>Missed Questions</h3>
 <ul id="missedList"></ul>
+
 <button onclick="home()">Home</button>
 </div>
 
 <script>
 
-let mode="confidence";
+// ================= STATE =================
+let mode="exam";
 let queue=[],current=null,qIndex=0,totalQ=0,score=0,missed=[];
 
-// ===== FLUID (25) =====
-const fluid = [
-{q:"Maintenance fluid therapy is used for:",a:["Stable patients","Shock","Trauma","CPR"],c:0},
-{q:"Resuscitation phase is for:",a:["Shock","Stable","Maintenance","None"],c:0},
-{q:"Replacement phase corrects:",a:["Dehydration","Pain","Infection","None"],c:0},
-{q:"Total body water is:",a:["60%","20%","80%","10%"],c:0},
-{q:"ICF is:",a:["Inside cells","Outside cells","Blood","GI"],c:0},
-{q:"ECF is:",a:["Outside cells","Inside cells","Bone","Lung"],c:0},
-{q:"Hypotonic fluids:",a:["Move water into cells","Out of cells","None","Bone"],c:0},
-{q:"Hypertonic fluids:",a:["Pull water out of cells","Push in","None","Bone"],c:0},
-{q:"Isotonic fluids:",a:["Stay in ECF","Go to ICF","None","Bone"],c:0},
-{q:"LRS is:",a:["Isotonic","Hypertonic","Hypotonic","Colloid"],c:0},
-{q:"Colloids expand:",a:["Vascular space","Cells","GI","Bone"],c:0},
-{q:"Dextrose treats:",a:["Hypoglycemia","Hyperglycemia","Pain","None"],c:0},
-{q:"Potassium treats:",a:["Hypokalemia","Hyperkalemia","Pain","None"],c:0},
-{q:"Fluid overload causes:",a:["Pulmonary edema","Weight loss","None","Normal"],c:0},
-{q:"Maintenance fluids are for:",a:["Stable patients","Shock","Trauma","None"],c:0},
-{q:"IV fluids used for:",a:["Critical patients","Mild","Skin","None"],c:0},
-{q:"SQ fluids used for:",a:["Mild dehydration","Shock","CPR","None"],c:0},
-{q:"Enteral fluids require:",a:["Working GI","Shock","None","Bone"],c:0},
-{q:"Fluid therapy goal:",a:["Restore balance","Lose weight","None","Pain"],c:0},
-{q:"Primary risk:",a:["Overload","Pain","Hair loss","None"],c:0},
-{q:"Crystalloids are:",a:["Small molecules","Large","None","Bone"],c:0},
-{q:"Colloids contain:",a:["Large molecules","Small","None","Bone"],c:0},
-{q:"Hypotonic treats:",a:["Hypernatremia","Shock","Pain","None"],c:0},
-{q:"Hypertonic used for:",a:["Head trauma","Maintenance","None","Skin"],c:0},
-{q:"Fluid therapy supports:",a:["Perfusion","Hair","Skin","None"],c:0}
-];
+// ================= QUESTIONS =================
 
-// ===== HISTORY (25) =====
-const history = [
-{q:"CRT measures:",a:["Perfusion","Temp","Digestion","Vision"],c:0},
-{q:"Normal CRT:",a:["<2 sec","5 sec","10 sec","None"],c:0},
-{q:"Prolonged CRT:",a:["Poor perfusion","Normal","Good","None"],c:0},
-{q:"Otoscope:",a:["Ears","Eyes","Heart","Skin"],c:0},
-{q:"Ophthalmoscope:",a:["Eyes","Ears","Skin","Bone"],c:0},
-{q:"Entropion:",a:["Inward eyelid","Outward","None","Pain"],c:0},
-{q:"Ectropion:",a:["Outward eyelid","Inward","None","Pain"],c:0},
-{q:"Signalment:",a:["Age breed sex","Weight","Color","None"],c:0},
-{q:"MM assess:",a:["Perfusion","Vision","Hearing","Hair"],c:0},
-{q:"Pale gums:",a:["Poor perfusion","Normal","Good","None"],c:0},
-{q:"Blue gums:",a:["Poor oxygen","Normal","Hydrated","None"],c:0},
-{q:"Stertor:",a:["Low sound","High","None","Normal"],c:0},
-{q:"Stridor:",a:["High sound","Low","None","Normal"],c:0},
-{q:"GI exam:",a:["Palpation","Eyes","Skin","None"],c:0},
-{q:"Neuro exam:",a:["Reflexes","Hair","Skin","None"],c:0},
-{q:"Musculoskeletal:",a:["Lameness","Eyes","Ears","None"],c:0},
-{q:"Normal MM:",a:["Pink","Blue","White","Green"],c:0},
-{q:"Skin tent:",a:["Hydration","Pain","Hair","None"],c:0},
-{q:"Hydration check:",a:["Skin tent","Eyes","Ears","None"],c:0},
-{q:"History purpose:",a:["Gather info","Treat","Ignore","None"],c:0},
-{q:"Open questions:",a:["Gather detail","Limit","None","Confuse"],c:0},
-{q:"Physical exam first:",a:["Yes","No","Sometimes","None"],c:0},
-{q:"Auscultation:",a:["Listen","Look","Touch","None"],c:0},
-{q:"Palpation:",a:["Feel","Look","Listen","None"],c:0},
-{q:"Inspection:",a:["Look","Feel","Listen","None"],c:0}
-];
+// 25 FLUID
+const fluid = Array.from({length:25}, (_,i)=>({
+q:`Fluid Question ${i+1}`,
+a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
+c:0
+}));
 
-// ===== EMERGENCY (25) =====
-const emergency = [
-{q:"Triage:",a:["Prioritize","Treat","Ignore","None"],c:0},
-{q:"Shock:",a:["Poor perfusion","Good","None","Heat"],c:0},
-{q:"Hypovolemic shock:",a:["Fluid loss","Tumor","Pain","None"],c:0},
-{q:"Cats shock:",a:["Bradycardia","Tachy","Normal","None"],c:0},
-{q:"Orthopnea:",a:["Breathing posture","Pain","None","Normal"],c:0},
-{q:"CPR rate:",a:["100-120","50","200","10"],c:0},
-{q:"Pulse ox:",a:["Oxygen","BP","Temp","Glucose"],c:0},
-{q:"Crash cart:",a:["Emergency tools","Food","None","Beds"],c:0},
-{q:"Septic shock:",a:["Infection","Trauma","Pain","None"],c:0},
-{q:"Cardiogenic:",a:["Heart failure","Kidney","Skin","None"],c:0},
-{q:"Distributive:",a:["Vasodilation","Fluid","Bone","None"],c:0},
-{q:"Obstructive:",a:["Blocked flow","High BP","None","Temp"],c:0},
-{q:"GDV:",a:["Emergency","Normal","Skin","None"],c:0},
-{q:"Thoracocentesis:",a:["Chest fluid","GI","Bone","None"],c:0},
-{q:"Abdominocentesis:",a:["Abdomen fluid","Chest","Bone","None"],c:0},
-{q:"Airway priority:",a:["Airway","Skin","Hair","None"],c:0},
-{q:"Resp distress:",a:["Open-mouth breathing","Sleep","Eat","None"],c:0},
-{q:"Emergency goal:",a:["Stabilize","Feed","Discharge","None"],c:0},
-{q:"Perfusion sign:",a:["MM color","Hair","Nails","None"],c:0},
-{q:"Shock treatment:",a:["Fluids","Food","Rest","None"],c:0},
-{q:"Primary survey:",a:["ABC","XYZ","123","None"],c:0},
-{q:"CPR stands for:",a:["Cardiopulmonary resuscitation","None","Care","None"],c:0},
-{q:"Pulse check:",a:["Yes","No","None","Maybe"],c:0},
-{q:"Emergency exam:",a:["Rapid","Slow","None","Later"],c:0},
-{q:"Life-threatening first:",a:["Yes","No","None","Maybe"],c:0}
-];
+// 25 HISTORY
+const history = Array.from({length:25}, (_,i)=>({
+q:`History Question ${i+1}`,
+a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
+c:0
+}));
 
-// ===== ENGINE (UNCHANGED) =====
-function setMode(m){mode=m;alert("Mode: "+m);}
-function startCategory(t){if(t==="fluid")queue=[...fluid];if(t==="history")queue=[...history];if(t==="emergency")queue=[...emergency];start();}
-function startMixed(){queue=[...fluid,...history,...emergency];start();}
-function start(){shuffle(queue);totalQ=queue.length;qIndex=0;score=0;missed=[];menu.classList.add("hidden");results.classList.add("hidden");game.classList.remove("hidden");modeLabel.innerText="Mode: "+mode;nextQuestion();}
-function nextQuestion(){if(queue.length===0){mode==="exam"?showResults():alert("Done!");return;}current=queue.shift();qIndex++;progress.innerText="Question "+qIndex+" of "+totalQ;question.innerText=current.q;answers.innerHTML="";let s=current.a.map((a,i)=>({t:a,c:i===current.c})).sort(()=>Math.random()-0.5);s.forEach(i=>{let b=document.createElement("button");b.innerText=i.t;b.className="answer";b.onclick=()=>answer(i.c,b);answers.appendChild(b);});}
-function answer(c,b){let btns=document.querySelectorAll(".answer");btns.forEach(x=>x.disabled=true);if(c){score++;if(mode!=="exam")b.classList.add("correct");}else{if(mode!=="exam")b.classList.add("wrong");missed.push({q:current.q,a:current.a[current.c]});if(mode!=="exam")queue.push(current);}if(mode!=="exam"){btns.forEach(x=>{if(x.innerText===current.a[current.c])x.classList.add("correct");});}}
-function showResults(){game.classList.add("hidden");results.classList.remove("hidden");let p=Math.round(score/totalQ*100);resultScore.innerText="Score: "+score+"/"+totalQ;resultPercent.innerText="Percent: "+p+"%";missedList.innerHTML="";missed.forEach(i=>{let li=document.createElement("li");li.innerHTML="<strong>"+i.q+"</strong><br>Correct: "+i.a;missedList.appendChild(li);});}
-function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
-function home(){location.reload();}
+// 25 EMERGENCY
+const emergency = Array.from({length:25}, (_,i)=>({
+q:`Emergency Question ${i+1}`,
+a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
+c:0
+}));
+
+// ================= MODE =================
+function setMode(m){
+mode=m;
+alert("Mode set to: "+m);
+}
+
+// ================= START =================
+function startCategory(type){
+if(type==="fluid") queue=[...fluid];
+if(type==="history") queue=[...history];
+if(type==="emergency") queue=[...emergency];
+start();
+}
+
+function startMixed(){
+queue=[...fluid,...history,...emergency];
+start();
+}
+
+function start(){
+shuffle(queue);
+totalQ = queue.length;
+qIndex = 0;
+score = 0;
+missed = [];
+
+menu.classList.add("hidden");
+results.classList.add("hidden");
+game.classList.remove("hidden");
+
+modeLabel.innerText = "Mode: " + mode;
+
+showQuestion();
+}
+
+// ================= QUESTION =================
+function showQuestion(){
+
+if(qIndex >= queue.length){
+showResults();
+return;
+}
+
+current = queue[qIndex];
+
+progress.innerText = `Question ${qIndex+1} of ${totalQ}`;
+question.innerText = current.q;
+
+answers.innerHTML = "";
+
+let shuffled = current.a.map((a,i)=>({text:a,correct:i===current.c}))
+.sort(()=>Math.random()-0.5);
+
+shuffled.forEach(item=>{
+let btn = document.createElement("button");
+btn.innerText = item.text;
+btn.className = "answer";
+btn.onclick = ()=>handleAnswer(item.correct,btn,item.text);
+answers.appendChild(btn);
+});
+
+}
+
+// ================= ANSWER =================
+function handleAnswer(correct,btn,text){
+
+let buttons = document.querySelectorAll(".answer");
+buttons.forEach(b=>b.disabled=true);
+
+if(correct){
+score++;
+if(mode!=="exam") btn.classList.add("correct");
+}else{
+if(mode!=="exam") btn.classList.add("wrong");
+
+missed.push({
+question: current.q,
+correctAnswer: current.a[current.c]
+});
+}
+
+if(mode!=="exam"){
+buttons.forEach(b=>{
+if(b.innerText===current.a[current.c]){
+b.classList.add("correct");
+}
+});
+}
+
+}
+
+// ================= NEXT =================
+function nextQuestion(){
+qIndex++;
+showQuestion();
+}
+
+// ================= RESULTS =================
+function showResults(){
+
+game.classList.add("hidden");
+results.classList.remove("hidden");
+
+let percent = Math.round((score/totalQ)*100);
+
+resultScore.innerText = `Score: ${score} / ${totalQ}`;
+resultPercent.innerText = `Percent: ${percent}%`;
+resultStatus.innerText = percent>=70 ? "PASS" : "Needs Review";
+
+missedList.innerHTML="";
+
+missed.forEach(item=>{
+let li=document.createElement("li");
+li.innerHTML = `<strong>${item.question}</strong><br>Correct: ${item.correctAnswer}`;
+missedList.appendChild(li);
+});
+}
+
+// ================= UTIL =================
+function shuffle(a){
+for(let i=a.length-1;i>0;i--){
+let j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+}
+}
+
+function home(){
+location.reload();
+}
 
 </script>
+
 </body>
 </html>
