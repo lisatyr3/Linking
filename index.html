@@ -2,419 +2,263 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Find the Link</title>
+<title>Vet Tech Trainer PRO</title>
 
 <style>
-body{
-font-family:Arial;
-background:#f3f4f4;
-padding:16px;
-margin:0;
-}
-
-.wrap{
-max-width:700px;
-margin:auto;
-background:white;
-padding:20px;
-border-radius:20px;
-box-shadow:0 3px 10px rgba(0,0,0,.1);
-text-align:center;
-}
-
-h1{color:#2d8a78;}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:10px;
-margin-top:20px;
-}
-
-.word{
-padding:14px;
-background:#e5e5e5;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.selected{
-background:#2d8a78;
-color:white;
-}
-
-.correct{
-background:#8bc34a;
-color:white;
-}
-
-button{
-margin-top:20px;
-padding:12px 18px;
-border:none;
-border-radius:8px;
-background:#2d8a78;
-color:white;
-font-size:16px;
-cursor:pointer;
-}
-
-.message{
-margin-top:15px;
-font-weight:bold;
-font-size:18px;
-}
+body { font-family: Arial; max-width: 900px; margin: 40px auto; text-align: center; }
+button { padding: 12px; margin: 6px; border-radius: 10px; border: none; cursor: pointer; }
+.answer { display: block; width: 100%; background: #eee; margin: 8px 0; }
+.correct { background: #4CAF50; color: white; }
+.wrong { background: #f44336; color: white; }
+.hidden { display: none; }
+#question { font-size: 22px; margin: 20px 0; white-space: pre-line; }
+#missedList { text-align:left; }
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
+<h1>Vet Tech Trainer</h1>
 
-<h1>Find the Link</h1>
-<p>Select 4 words that belong together.</p>
+<div id="menu">
+<h2>Mode</h2>
+<button onclick="setMode('confidence')">Confidence</button>
+<button onclick="setMode('study')">Study</button>
+<button onclick="setMode('exam')">Exam</button>
 
-<div class="grid" id="grid"></div>
+<h2>Category</h2>
+<button onclick="startCategory('fluid')">Fluid</button>
+<button onclick="startCategory('history')">History</button>
+<button onclick="startCategory('emergency')">Emergency</button>
+<button onclick="startMixed()">Full Exam</button>
+</div>
 
-<button onclick="submitGroup()">Submit Group</button>
+<div id="game" class="hidden">
+<h3 id="modeLabel"></h3>
+<div id="progress"></div>
+<div id="question"></div>
 
-<div class="message" id="message"></div>
+<div id="confidenceBox" class="hidden">
+<p>Do you know this?</p>
+<button onclick="setConfidence(true)">Yes</button>
+<button onclick="setConfidence(false)">Not sure</button>
+</div>
 
+<div id="answers"></div>
+<div id="feedback"></div>
+
+<button onclick="nextQuestion()">Next</button>
+<button onclick="home()">Home</button>
+</div>
+
+<div id="results" class="hidden">
+<h2>Results</h2>
+<div id="resultScore"></div>
+<div id="resultPercent"></div>
+<div id="resultStatus"></div>
+
+<h3>Missed Questions</h3>
+<ul id="missedList"></ul>
+
+<button onclick="home()">Home</button>
 </div>
 
 <script>
 
-/* 30 PUZZLES */
+let mode="confidence";
+let queue=[],current=null,qIndex=0,totalQ=0,score=0,confidence=null,missed=[];
 
-const puzzles = [
+// ===== FLUID (25) =====
+const fluid=[
+{q:"Maintenance fluid therapy is used for:",a:["Stable patients","Shock","Trauma","CPR"],c:0},
+{q:"A stable patient needing daily hydration requires which phase?",a:["Maintenance","Resuscitation","Replacement","Emergency"],c:0},
+{q:"Which phase restores circulating volume in shock?",a:["Resuscitation","Maintenance","Replacement","None"],c:0},
+{q:"A dehydrated patient needs which phase?",a:["Replacement","Maintenance","Resuscitation","None"],c:0},
 
-{
-groups:[
-["ROSE","LILY","TULIP","DAISY"],
-["DOG","CAT","HORSE","COW"],
-["RED","BLUE","GREEN","YELLOW"],
-["CHAIR","TABLE","COUCH","BED"]
-]
-},
+{q:"Total body water is approximately:",a:["60%","20%","80%","10%"],c:0},
+{q:"What percentage of body weight is water?",a:["60%","25%","10%","90%"],c:0},
 
-{
-groups:[
-["APPLE","PEAR","PLUM","PEACH"],
-["CAR","TRUCK","VAN","SUV"],
-["SOFA","CHAIR","DESK","TABLE"],
-["RUN","WALK","JOG","SPRINT"]
-]
-},
+{q:"ICF refers to fluid:",a:["Inside cells","Outside cells","In blood","In GI"],c:0},
+{q:"Fluid inside cells is called:",a:["Intracellular fluid","Extracellular","Plasma","Interstitial"],c:0},
 
-{
-groups:[
-["MERCURY","VENUS","EARTH","MARS"],
-["GOLD","SILVER","IRON","COPPER"],
-["SPRING","SUMMER","FALL","WINTER"],
-["JUMP","HOP","LEAP","BOUND"]
-]
-},
+{q:"ECF refers to fluid:",a:["Outside cells","Inside cells","Bone","Lung"],c:0},
+{q:"Fluid outside cells is called:",a:["Extracellular fluid","Intracellular","Plasma only","None"],c:0},
 
-{
-groups:[
-["SHIRT","PANTS","DRESS","SKIRT"],
-["SPOON","FORK","KNIFE","PLATE"],
-["PEN","PENCIL","MARKER","CRAYON"],
-["DOG","BARK","TAIL","LEASH"]
-]
-},
+{q:"Hypotonic fluids are used to treat:",a:["Hypernatremia","Shock","Hemorrhage","Pain"],c:0},
+{q:"Which fluid moves water INTO cells?",a:["Hypotonic","Hypertonic","Isotonic","Colloid"],c:0},
 
-{
-groups:[
-["MILK","CHEESE","BUTTER","YOGURT"],
-["BREAD","RICE","PASTA","OATS"],
-["APPLE","BANANA","ORANGE","GRAPE"],
-["WATER","JUICE","TEA","COFFEE"]
-]
-},
+{q:"Hypertonic fluids:",a:["Pull water out of cells","Push water into cells","Stay same","None"],c:0},
+{q:"A patient with head trauma may receive:",a:["Hypertonic fluids","Hypotonic","None","Colloid"],c:0},
 
-{
-groups:[
-["SUN","MOON","STAR","PLANET"],
-["OCEAN","RIVER","LAKE","STREAM"],
-["MOUNTAIN","HILL","VALLEY","CLIFF"],
-["RAIN","SNOW","WIND","FOG"]
-]
-},
+{q:"Isotonic fluids distribute into:",a:["ECF","ICF","Bone","Cells only"],c:0},
+{q:"LRS is classified as:",a:["Isotonic","Hypertonic","Hypotonic","Colloid"],c:0},
 
-{
-groups:[
-["MONDAY","TUESDAY","WEDNESDAY","THURSDAY"],
-["JANUARY","FEBRUARY","MARCH","APRIL"],
-["SPRING","SUMMER","FALL","WINTER"],
-["MORNING","NOON","EVENING","NIGHT"]
-]
-},
+{q:"Colloids remain in:",a:["Vascular space","Cells","GI","Bone"],c:0},
+{q:"Fluids with large molecules are:",a:["Colloids","Crystalloids","None","Plasma"],c:0},
 
-{
-groups:[
-["DOCTOR","NURSE","TEACHER","CHEF"],
-["HAMMER","SCREWDRIVER","WRENCH","DRILL"],
-["CAR","BIKE","TRAIN","PLANE"],
-["SHOE","BOOT","SANDAL","SNEAKER"]
-]
-},
+{q:"Dextrose is used for:",a:["Hypoglycemia","Hyperglycemia","Shock","Pain"],c:0},
+{q:"Low blood sugar is treated with:",a:["Dextrose","Potassium","Saline","None"],c:0},
 
-{
-groups:[
-["BEEF","CHICKEN","PORK","TURKEY"],
-["CARROT","POTATO","ONION","PEPPER"],
-["SALT","SUGAR","FLOUR","SPICE"],
-["BAKE","FRY","BOIL","GRILL"]
-]
-},
+{q:"Potassium is given for:",a:["Hypokalemia","Hyperkalemia","Anemia","Pain"],c:0},
+{q:"Low potassium is called:",a:["Hypokalemia","Hyperkalemia","Anemia","None"],c:0},
 
-{
-groups:[
-["BOOK","MAGAZINE","NEWSPAPER","JOURNAL"],
-["TV","RADIO","PHONE","TABLET"],
-["MOVIE","SHOW","SONG","PODCAST"],
-["WRITE","READ","WATCH","LISTEN"]
-]
-},
-
-{
-groups:[
-["BANK","STORE","POST","LIBRARY"],
-["SCHOOL","COLLEGE","CLASS","LESSON"],
-["CHURCH","TEMPLE","MOSQUE","SHRINE"],
-["HOME","HOUSE","APARTMENT","CONDO"]
-]
-},
-
-{
-groups:[
-["BASEBALL","FOOTBALL","BASKETBALL","SOCCER"],
-["RUN","SWIM","JUMP","THROW"],
-["BALL","BAT","NET","GOAL"],
-["TEAM","COACH","PLAYER","GAME"]
-]
-},
-
-{
-groups:[
-["DOG","CAT","FISH","BIRD"],
-["LION","TIGER","BEAR","WOLF"],
-["HORSE","COW","SHEEP","GOAT"],
-["MOUSE","RAT","SQUIRREL","RABBIT"]
-]
-},
-
-{
-groups:[
-["HAPPY","SAD","ANGRY","CALM"],
-["FAST","SLOW","QUICK","RAPID"],
-["BIG","SMALL","TALL","SHORT"],
-["HOT","COLD","WARM","COOL"]
-]
-},
-
-{
-groups:[
-["BED","PILLOW","BLANKET","SHEET"],
-["SOAP","SHAMPOO","TOWEL","BRUSH"],
-["SINK","TOILET","SHOWER","TUB"],
-["DOOR","WINDOW","WALL","FLOOR"]
-]
-},
-
-{
-groups:[
-["GUITAR","PIANO","DRUM","VIOLIN"],
-["ROCK","JAZZ","COUNTRY","POP"],
-["SONG","ALBUM","BAND","SINGER"],
-["DANCE","SING","PLAY","LISTEN"]
-]
-},
-
-{
-groups:[
-["SAND","SEA","SUN","SHELL"],
-["BEACH","TOWEL","CHAIR","UMBRELLA"],
-["SWIM","FLOAT","DIVE","SPLASH"],
-["HOT","BRIGHT","CLEAR","BLUE"]
-]
-},
-
-{
-groups:[
-["FIRE","WATER","AIR","EARTH"],
-["WOOD","METAL","STONE","GLASS"],
-["LIGHT","DARK","SHADOW","GLOW"],
-["HEAT","COLD","WIND","RAIN"]
-]
-},
-
-{
-groups:[
-["KING","QUEEN","PRINCE","PRINCESS"],
-["CASTLE","CROWN","THRONE","KNIGHT"],
-["DRAGON","SWORD","MAGIC","QUEST"],
-["FAIRY","WITCH","SPELL","POTION"]
-]
-},
-
-{
-groups:[
-["CAR","GAS","ROAD","DRIVE"],
-["PLANE","FLY","AIR","TRIP"],
-["TRAIN","TRACK","RAIL","STOP"],
-["SHIP","SEA","PORT","SAIL"]
-]
-},
-
-{
-groups:[
-["PHONE","TEXT","CALL","APP"],
-["EMAIL","SEND","INBOX","MESSAGE"],
-["TV","SHOW","CHANNEL","REMOTE"],
-["BOOK","PAGE","READ","CHAPTER"]
-]
-},
-
-{
-groups:[
-["COLD","FLU","COUGH","FEVER"],
-["DOCTOR","VISIT","CHECK","TEST"],
-["MEDICINE","PILL","DOSE","DRUG"],
-["REST","SLEEP","HEAL","RECOVER"]
-]
-},
-
-{
-groups:[
-["BREAKFAST","LUNCH","DINNER","SNACK"],
-["EGG","TOAST","BACON","COFFEE"],
-["SOUP","SALAD","SANDWICH","PIZZA"],
-["STEAK","CHICKEN","FISH","RICE"]
-]
-},
-
-{
-groups:[
-["RAIN","STORM","CLOUD","THUNDER"],
-["SUN","HEAT","LIGHT","SKY"],
-["WIND","BREEZE","GUST","AIR"],
-["SNOW","ICE","COLD","FREEZE"]
-]
-},
-
-{
-groups:[
-["MAP","COMPASS","DIRECTION","NORTH"],
-["ROAD","TRIP","DRIVE","ROUTE"],
-["HOTEL","ROOM","STAY","BOOK"],
-["BAG","PACK","TRAVEL","FLIGHT"]
-]
-},
-
-{
-groups:[
-["KEY","LOCK","DOOR","OPEN"],
-["CODE","PASSWORD","LOGIN","ACCESS"],
-["SAFE","VAULT","SECURE","PROTECT"],
-["ALARM","BELL","SOUND","ALERT"]
-]
-},
-
-{
-groups:[
-["TIME","CLOCK","WATCH","HOUR"],
-["DAY","WEEK","MONTH","YEAR"],
-["PAST","PRESENT","FUTURE","NOW"],
-["EARLY","LATE","SOON","LATER"]
-]
-}
-
+{q:"Fluid overload can cause:",a:["Pulmonary edema","Weight loss","Improved breathing","None"],c:0},
+{q:"Too much fluid therapy leads to:",a:["Edema","Dehydration","Weight loss","None"],c:0}
 ];
 
-/* GAME */
+// ===== HISTORY (25) =====
+const history=[
+{q:"CRT measures:",a:["Perfusion","Temperature","Digestion","Vision"],c:0},
+{q:"Capillary refill time evaluates:",a:["Perfusion","Respiration","Pain","Temperature"],c:0},
 
-let puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
-let words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
-let selected = [];
-let solved = [];
+{q:"Normal CRT is:",a:["<2 seconds","5 seconds","10 seconds","None"],c:0},
+{q:"Prolonged CRT indicates:",a:["Poor perfusion","Normal status","Good oxygen","None"],c:0},
 
-function draw(){
-let gridHTML = "";
+{q:"Otoscope is used for:",a:["Ears","Eyes","Heart","Skin"],c:0},
+{q:"Which tool examines ears?",a:["Otoscope","Ophthalmoscope","Stethoscope","None"],c:0},
 
-words.forEach(word=>{
-let cls = "word";
+{q:"Ophthalmoscope examines:",a:["Eyes","Ears","Skin","Bone"],c:0},
+{q:"Which tool examines eyes?",a:["Ophthalmoscope","Otoscope","Scope","None"],c:0},
 
-if(selected.includes(word)) cls += " selected";
-if(solved.includes(word)) cls += " correct";
+{q:"Entropion is:",a:["Inward eyelid","Outward eyelid","Swelling","None"],c:0},
+{q:"Ectropion is:",a:["Outward eyelid","Inward eyelid","Swelling","None"],c:0},
 
-gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
+{q:"Signalment includes:",a:["Age, breed, sex","Weight only","Color","None"],c:0},
+{q:"Patient identification includes:",a:["Age, breed, sex","Only age","Only breed","None"],c:0},
+
+{q:"Mucous membranes assess:",a:["Perfusion","Vision","Hearing","Hair"],c:0},
+{q:"Pale gums indicate:",a:["Poor perfusion","Normal","Good oxygen","None"],c:0},
+
+{q:"Stertor is:",a:["Low snoring sound","High wheeze","Normal","None"],c:0},
+{q:"Stridor is:",a:["High-pitched sound","Low sound","Normal","None"],c:0},
+
+{q:"GI exam includes:",a:["Palpation","Eye exam","Ear exam","None"],c:0},
+{q:"Abdominal palpation checks:",a:["Organs","Hair","Skin","None"],c:0},
+
+{q:"Neurologic exam includes:",a:["Reflexes","Hair","Skin","Eyes"],c:0},
+{q:"Musculoskeletal exam checks:",a:["Lameness","Eyes","Ears","None"],c:0},
+
+{q:"Normal MM color:",a:["Pink","Blue","White","Green"],c:0},
+{q:"Blue gums indicate:",a:["Poor oxygen","Normal","Hydrated","None"],c:0},
+
+{q:"Hydration is assessed by:",a:["Skin tent","Eyes","Ears","Nose"],c:0},
+{q:"Skin tenting indicates:",a:["Dehydration","Normal","Overhydration","None"],c:0}
+];
+
+// ===== EMERGENCY (25) =====
+const emergency=[
+{q:"Triage means:",a:["Prioritize patients","Treat all","Ignore","None"],c:0},
+{q:"Emergency prioritization is called:",a:["Triage","CPR","Exam","None"],c:0},
+
+{q:"Shock causes:",a:["Poor perfusion","Good flow","None","Heat"],c:0},
+{q:"A patient in shock has:",a:["Poor tissue perfusion","Normal circulation","High oxygen","None"],c:0},
+
+{q:"Hypovolemic shock is due to:",a:["Fluid loss","Tumor","Pain","None"],c:0},
+{q:"Blood loss leads to:",a:["Hypovolemic shock","Normal","Pain","None"],c:0},
+
+{q:"Cats in shock often show:",a:["Bradycardia","Tachycardia","Normal","None"],c:0},
+
+{q:"Orthopnea is:",a:["Breathing posture","Pain posture","Normal","None"],c:0},
+{q:"Patient sitting upright to breathe shows:",a:["Orthopnea","Normal","Pain","None"],c:0},
+
+{q:"CPR rate:",a:["100-120/min","50","200","10"],c:0},
+{q:"Chest compressions should be:",a:["100-120/min","Slow","Fast","None"],c:0},
+
+{q:"Pulse oximeter measures:",a:["Oxygen saturation","BP","Temp","Glucose"],c:0},
+
+{q:"Crash cart contains:",a:["Emergency tools","Food","None","Beds"],c:0},
+
+{q:"Septic shock is caused by:",a:["Infection","Trauma","Pain","None"],c:0},
+{q:"Infection can lead to:",a:["Septic shock","Normal","Pain","None"],c:0},
+
+{q:"Cardiogenic shock is:",a:["Heart failure","Kidney","Skin","None"],c:0},
+
+{q:"Distributive shock involves:",a:["Vasodilation","Fluid loss","Bone","None"],c:0},
+
+{q:"Obstructive shock is:",a:["Blocked blood flow","High BP","None","Temp"],c:0},
+
+{q:"GDV is:",a:["Emergency","Normal","Skin issue","None"],c:0},
+
+{q:"Thoracocentesis removes fluid from:",a:["Chest","Abdomen","Bone","None"],c:0},
+
+{q:"Abdominocentesis removes fluid from:",a:["Abdomen","Chest","Bone","None"],c:0},
+
+{q:"Emergency priority is:",a:["Airway","Hair","Skin","None"],c:0},
+
+{q:"Open-mouth breathing indicates:",a:["Resp distress","Normal","Sleep","None"],c:0},
+
+{q:"Emergency goal is:",a:["Stabilize","Feed","Discharge","None"],c:0}
+];
+
+// ===== LOGIC (same working engine) =====
+function setMode(m){mode=m;alert("Mode: "+m);}
+
+function startCategory(t){
+if(t==="fluid")queue=[...fluid];
+if(t==="history")queue=[...history];
+if(t==="emergency")queue=[...emergency];
+start();
+}
+
+function startMixed(){queue=[...fluid,...history,...emergency];start();}
+
+function start(){
+shuffle(queue);totalQ=queue.length;qIndex=0;score=0;missed=[];
+menu.classList.add("hidden");results.classList.add("hidden");game.classList.remove("hidden");
+modeLabel.innerText="Mode: "+mode;
+nextQuestion();
+}
+
+function nextQuestion(){
+if(queue.length===0){mode==="exam"?showResults():alert("Done!");return;}
+current=queue.shift();qIndex++;
+progress.innerText="Question "+qIndex+" of "+totalQ;
+question.innerText=current.q;
+answers.innerHTML="";feedback.innerText="";
+let shuffled=current.a.map((a,i)=>({t:a,c:i===current.c})).sort(()=>Math.random()-0.5);
+shuffled.forEach(i=>{
+let b=document.createElement("button");
+b.innerText=i.t;b.className="answer";
+b.onclick=()=>answer(i.c,b);
+answers.appendChild(b);
 });
-
-document.getElementById("grid").innerHTML = gridHTML;
+if(mode==="confidence"){confidenceBox.classList.remove("hidden");answers.classList.add("hidden");}
+else{confidenceBox.classList.add("hidden");answers.classList.remove("hidden");}
 }
 
-function toggle(word){
-if(solved.includes(word)) return;
+function setConfidence(v){confidence=v;answers.classList.remove("hidden");confidenceBox.classList.add("hidden");}
 
-if(selected.includes(word)){
-selected = selected.filter(w=>w!==word);
-}else{
-if(selected.length < 4){
-selected.push(word);
+function answer(c,b){
+let btns=document.querySelectorAll(".answer");btns.forEach(x=>x.disabled=true);
+if(c){score++;if(mode!=="exam")b.classList.add("correct");}
+else{
+if(mode!=="exam")b.classList.add("wrong");
+missed.push({q:current.q,a:current.a[current.c]});
+if(mode!=="exam")queue.push(current);
+}
+if(mode!=="exam"){
+btns.forEach(x=>{if(x.innerText===current.a[current.c])x.classList.add("correct");});
 }
 }
-draw();
+
+function showResults(){
+game.classList.add("hidden");results.classList.remove("hidden");
+let p=Math.round(score/totalQ*100);
+resultScore.innerText="Score: "+score+"/"+totalQ;
+resultPercent.innerText="Percent: "+p+"%";
+resultStatus.innerText=p>=70?"PASS":"Needs Review";
+missedList.innerHTML="";
+missed.forEach(i=>{
+let li=document.createElement("li");
+li.innerHTML="<strong>"+i.q+"</strong><br>Correct: "+i.a;
+missedList.appendChild(li);
+});
 }
 
-function submitGroup(){
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
 
-if(selected.length !== 4){
-document.getElementById("message").textContent = "Select 4 words";
-return;
-}
-
-let isCorrect = puzzle.groups.some(group =>
-group.every(word => selected.includes(word))
-);
-
-if(isCorrect){
-
-selected.forEach(w => solved.push(w));
-selected = [];
-
-if(solved.length === 16){
-document.getElementById("message").innerHTML = `
-🎉 You solved it!<br>
-<button onclick="nextPuzzle()">Play Another Puzzle</button>
-`;
-}else{
-document.getElementById("message").textContent = "Nice! Keep going";
-}
-
-}else{
-document.getElementById("message").textContent = "Try again";
-selected = [];
-}
-
-draw();
-}
-
-function nextPuzzle(){
-puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
-words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
-selected = [];
-solved = [];
-document.getElementById("message").textContent="";
-draw();
-}
-
-draw();
+function home(){location.reload();}
 
 </script>
-
 </body>
 </html>
