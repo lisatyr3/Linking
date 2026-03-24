@@ -1,219 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Vet Tech Trainer</title>
-
-<style>
-body { font-family: Arial; max-width: 900px; margin: 40px auto; text-align: center; }
-button { padding: 12px; margin: 6px; border-radius: 10px; border: none; cursor: pointer; }
-.answer { display: block; width: 100%; background: #eee; margin: 8px 0; }
-.correct { background: #4CAF50; color: white; }
-.wrong { background: #f44336; color: white; }
-.hidden { display: none; }
-#question { font-size: 22px; margin: 20px 0; white-space: pre-line; }
-#missedList { text-align:left; margin-top:20px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vet Tech Trainer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 920px;
+      margin: 40px auto;
+      padding: 0 16px 40px;
+      text-align: center;
+    }
+    h1 { margin-bottom: 24px; }
+    h2 { margin-top: 28px; }
+    button {
+      padding: 12px 16px;
+      margin: 6px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .answer-btn {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      background: #ececec;
+    }
+    .correct {
+      background: #4CAF50 !important;
+      color: #fff;
+    }
+    .wrong {
+      background: #f44336 !important;
+      color: #fff;
+    }
+    .hidden {
+      display: none;
+    }
+    #questionText {
+      font-size: 24px;
+      margin: 20px 0;
+      white-space: pre-line;
+    }
+    #progress, #scoreLine, #feedback {
+      margin: 12px 0;
+      font-size: 18px;
+    }
+    #feedback {
+      min-height: 24px;
+    }
+    #missedList {
+      text-align: left;
+      margin-top: 18px;
+      padding-left: 20px;
+    }
+    #missedList li {
+      margin-bottom: 16px;
+    }
+    .small-note {
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
 </head>
-
 <body>
 
-<h1>Vet Tech Trainer</h1>
+  <h1>Vet Tech Trainer</h1>
 
-<div id="menu">
-<h2>Mode</h2>
-<button onclick="setMode('confidence')">Confidence</button>
-<button onclick="setMode('study')">Study</button>
-<button onclick="setMode('exam')">Exam</button>
+  <div id="menuScreen">
+    <h2>Step 1: Choose Mode</h2>
+    <button onclick="setMode('confidence')">🧠 Confidence</button>
+    <button onclick="setMode('study')">📚 Study</button>
+    <button onclick="setMode('exam')">🧪 Exam</button>
+    <div class="small-note">Choose mode first, then choose a category.</div>
 
-<h2>Category</h2>
-<button onclick="startCategory('fluid')">Fluid</button>
-<button onclick="startCategory('history')">History</button>
-<button onclick="startCategory('emergency')">Emergency</button>
-<button onclick="startMixed()">Full Exam</button>
-</div>
+    <h2>Step 2: Choose Category</h2>
+    <button onclick="startCategory('fluid')">Fluid Therapy</button>
+    <button onclick="startCategory('history')">History & Physical</button>
+    <button onclick="startCategory('emergency')">Emergency</button>
+    <button onclick="startMixed()">🔥 Full Exam</button>
+  </div>
 
-<div id="game" class="hidden">
-<h3 id="modeLabel"></h3>
-<div id="progress"></div>
-<div id="question"></div>
-<div id="answers"></div>
-<button onclick="nextQuestion()">Next</button>
-<button onclick="home()">Home</button>
-</div>
+  <div id="gameScreen" class="hidden">
+    <h2 id="modeLabel"></h2>
+    <div id="progress"></div>
+    <div id="scoreLine"></div>
+    <div id="questionText"></div>
 
-<div id="results" class="hidden">
-<h2>Results</h2>
-<div id="resultScore"></div>
-<div id="resultPercent"></div>
-<div id="resultStatus"></div>
+    <div id="confidenceBox" class="hidden">
+      <p>Do you know this?</p>
+      <button onclick="setConfidence(true)">Yes</button>
+      <button onclick="setConfidence(false)">Not sure</button>
+    </div>
 
-<h3>Missed Questions</h3>
-<ul id="missedList"></ul>
+    <div id="answersBox"></div>
+    <div id="feedback"></div>
 
-<button onclick="home()">Home</button>
-</div>
+    <button id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
+    <button onclick="goHome()">🏠 Home</button>
+  </div>
 
-<script>
+  <div id="resultsScreen" class="hidden">
+    <h2>Exam Results</h2>
+    <div id="resultScore"></div>
+    <div id="resultPercent"></div>
+    <div id="resultStatus"></div>
 
-// ================= STATE =================
-let mode="exam";
-let queue=[],current=null,qIndex=0,totalQ=0,score=0,missed=[];
+    <h3>Missed Questions</h3>
+    <ul id="missedList"></ul>
 
-// ================= QUESTIONS =================
+    <button onclick="goHome()">🏠 Home</button>
+  </div>
 
-// 25 FLUID
-const fluid = Array.from({length:25}, (_,i)=>({
-q:`Fluid Question ${i+1}`,
-a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
-c:0
-}));
+  <script>
+    // -----------------------------
+    // DATA: 25 per category
+    // Based only on uploaded slides
+    // -----------------------------
+    const fluid = [
+      { q: "The body is made up of approximately what percentage of water?", a: ["60%", "30%", "80%", "10%"], c: 0 },
+      { q: "TBW stands for:", a: ["Total body water", "Total blood weight", "Tissue body water", "Total base water"], c: 0 },
+      { q: "Total body water is divided mainly into which two compartments?", a: ["ICF and ECF", "Plasma and serum", "Arteries and veins", "Bone and muscle"], c: 0 },
+      { q: "Intracellular fluid is abbreviated as:", a: ["ICF", "ECF", "IVF", "IOF"], c: 0 },
+      { q: "Extracellular fluid is abbreviated as:", a: ["ECF", "ICF", "SQF", "POF"], c: 0 },
 
-// 25 HISTORY
-const history = Array.from({length:25}, (_,i)=>({
-q:`History Question ${i+1}`,
-a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
-c:0
-}));
+      { q: "Crystalloids are solutions that contain:", a: ["Electrolytes in water", "Only proteins", "Only blood cells", "Only glucose"], c: 0 },
+      { q: "Hypotonic fluids have an osmolality that is __________ blood.", a: ["less than", "equal to", "greater than", "unrelated to"], c: 0 },
+      { q: "Hypotonic fluids provide water in greater proportion than:", a: ["electrolytes", "proteins", "red blood cells", "platelets"], c: 0 },
+      { q: "Which of the following is an example of a hypotonic fluid from the slides?", a: ["0.45% NaCl", "0.9% NaCl", "LRS", "7% NaCl"], c: 0 },
+      { q: "Hypotonic fluids may be used to treat:", a: ["Hypernatremia", "Shock", "Hemorrhage", "Hypothermia"], c: 0 },
 
-// 25 EMERGENCY
-const emergency = Array.from({length:25}, (_,i)=>({
-q:`Emergency Question ${i+1}`,
-a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
-c:0
-}));
+      { q: "Hypotonic fluids are NOT used for fluid resuscitation because they are ineffective for expanding:", a: ["vascular volume", "cell volume", "bone marrow", "GI volume"], c: 0 },
+      { q: "Isotonic fluids have an osmolality that is approximately __________ blood.", a: ["equal to", "less than", "greater than", "twice"], c: 0 },
+      { q: "Which of the following is isotonic?", a: ["0.9% NaCl", "7% NaCl", "0.45% NaCl", "Distilled water"], c: 0 },
+      { q: "Lactated Ringer’s Solution (LRS) is classified as:", a: ["Isotonic", "Hypotonic", "Hypertonic", "Colloid"], c: 0 },
+      { q: "Isotonic fluids can be used for resuscitation, rehydration, and:", a: ["replacing ongoing losses", "sedation", "appetite stimulation", "surgery only"], c: 0 },
 
-// ================= MODE =================
-function setMode(m){
-mode=m;
-alert("Mode set to: "+m);
-}
+      { q: "A possible complication of isotonic fluids is:", a: ["tissue edema", "blindness", "fracture", "seizures"], c: 0 },
+      { q: "Hypertonic fluids have an osmolality that is __________ blood.", a: ["greater than", "equal to", "less than", "half of"], c: 0 },
+      { q: "Which are examples of hypertonic saline listed on the slide?", a: ["3% and 7% NaCl", "0.45% and 0.9% NaCl", "LRS and Normosol", "Dextrose and plasma"], c: 0 },
+      { q: "Hypertonic fluids may be used in head trauma to help reduce:", a: ["intracranial pressure", "temperature", "PCV", "platelets"], c: 0 },
+      { q: "Hypertonic fluids should not be given too quickly because rapid volume expansion can trigger:", a: ["bradycardia", "alopecia", "vomiting", "ataxia"], c: 0 },
 
-// ================= START =================
-function startCategory(type){
-if(type==="fluid") queue=[...fluid];
-if(type==="history") queue=[...history];
-if(type==="emergency") queue=[...emergency];
-start();
-}
+      { q: "Colloids contain high molecular weight molecules suspended in an:", a: ["isotonic crystalloid", "acidic solution", "antibiotic solution", "oil base"], c: 0 },
+      { q: "The large molecules in colloids tend to remain within the:", a: ["vascular space", "intracellular space", "GI tract", "bone"], c: 0 },
+      { q: "A major use of colloids is:", a: ["resuscitation", "ear cleaning", "pain scoring", "fecal testing"], c: 0 },
+      { q: "Which of the following is listed as a colloid?", a: ["Vetstarch", "0.45% NaCl", "LRS", "3% NaCl"], c: 0 },
+      { q: "The biggest concern in fluid therapy complications is excessive quantity causing:", a: ["volume overload", "hair loss", "vision loss", "bone pain"], c: 0 }
+    ];
 
-function startMixed(){
-queue=[...fluid,...history,...emergency];
-start();
-}
+    const history = [
+      { q: "When taking a history, the first step is to:", a: ["introduce yourself and explain your role", "take blood immediately", "weigh the pet", "start treatment before speaking"], c: 0 },
+      { q: "Signalment includes name, age, sex, reproductive status, breed, species, and:", a: ["color", "favorite food", "owner income", "microchip company"], c: 0 },
+      { q: "If the pet was taken away before history is obtained in an emergency, you should first:", a: ["reassure the owner about the pet’s status", "ask about vaccines", "collect payment", "give discharge instructions"], c: 0 },
+      { q: "You should use language that the owner will:", a: ["understand", "memorize", "translate later", "ignore"], c: 0 },
+      { q: "The slides recommend asking what kind of questions?", a: ["open-ended questions", "yes/no questions only", "no questions", "only medical jargon questions"], c: 0 },
 
-function start(){
-shuffle(queue);
-totalQ = queue.length;
-qIndex = 0;
-score = 0;
-missed = [];
+      { q: "When taking a history, do your best not to be:", a: ["judgmental", "organized", "professional", "calm"], c: 0 },
+      { q: "Background information should include previous medical conditions and whether the pet has:", a: ["traveled", "won awards", "changed groomers", "had obedience classes"], c: 0 },
+      { q: "Preventative history includes vaccine history and:", a: ["heartworm/flea & tick prevention", "favorite treats", "coat color", "crate size"], c: 0 },
+      { q: "Behavioral history should ask about changes in behavior, elimination issues, and:", a: ["disorientation", "fur texture", "eye color", "microchip brand"], c: 0 },
+      { q: "Household information should include whether there are any other animals in the:", a: ["home", "county", "state", "waiting room"], c: 0 },
 
-menu.classList.add("hidden");
-results.classList.add("hidden");
-game.classList.remove("hidden");
+      { q: "The history should ask if the pet has ever received a:", a: ["blood transfusion", "tattoo", "pedicure", "training certificate"], c: 0 },
+      { q: "If it is an emergency, make sure the patient is stable first, then get the:", a: ["history", "fecal sample", "grooming tools", "discharge form"], c: 0 },
+      { q: "The most important first diagnostic test is the:", a: ["physical exam", "radiograph", "MRI", "CT"], c: 0 },
+      { q: "During the physical exam, you should document:", a: ["all information", "only abnormal findings", "only the temperature", "nothing until later"], c: 0 },
+      { q: "One mentation descriptor listed on the slide is:", a: ["BAR", "BPQ", "RBC", "ECG"], c: 0 },
 
-modeLabel.innerText = "Mode: " + mode;
+      { q: "The physical exam should include temperature, weight, pulse, respiration, and:", a: ["heart rate", "platelet count", "bilirubin", "cortisol"], c: 0 },
+      { q: "The tool used to examine the eyes is the:", a: ["ophthalmic scope", "otoscope", "stethoscope", "ECG"], c: 0 },
+      { q: "Entropion means the eyelid is rolled:", a: ["inward", "outward", "backward", "not rolled"], c: 0 },
+      { q: "Ectropion means the eyelid is rolled:", a: ["outward", "inward", "upward", "not rolled"], c: 0 },
+      { q: "The nictitating membrane is also called the:", a: ["third eyelid", "tear duct", "lens", "retina"], c: 0 },
 
-showQuestion();
-}
+      { q: "Anisocoria means:", a: ["unequal pupil sizes", "equal pupil sizes", "blue sclera", "no blink reflex"], c: 0 },
+      { q: "The tool used to examine the ear is the:", a: ["otoscope", "ophthalmoscope", "pulse ox", "capnometer"], c: 0 },
+      { q: "Capillary refill time (CRT) is checked during the oral exam along with MM color and:", a: ["moistness/tackiness", "coat length", "ear thickness", "nail shape"], c: 0 },
+      { q: "Stertor is described on the slide as a:", a: ["low-pitched snoring noise", "high-pitched wheeze", "silent breath", "normal purr"], c: 0 },
+      { q: "Stridor is described on the slide as a:", a: ["high-pitched wheezing noise", "low-pitched snore", "silent breath", "normal cough"], c: 0 }
+    ];
 
-// ================= QUESTION =================
-function showQuestion(){
+    const emergency = [
+      { q: "During telephone triage, the first thing you should get is the client’s name and:", a: ["number", "pet food brand", "insurance information", "address only"], c: 0 },
+      { q: "If a case is life threatening on the phone, the client should go to the:", a: ["first available clinic", "groomer", "pet store", "boarding kennel"], c: 0 },
+      { q: "You should be careful giving advice over the phone:", a: ["true", "false", "only at night", "only for cats"], c: 0 },
+      { q: "In-hospital triage is the process of sorting ill or injured animals based on need for:", a: ["immediate medical treatment", "boarding", "grooming", "training"], c: 0 },
+      { q: "Triage is most often performed by a:", a: ["veterinary technician", "farrier", "groomer", "owner"], c: 0 },
 
-if(qIndex >= queue.length){
-showResults();
-return;
-}
+      { q: "The initial task in triage is to perform a:", a: ["primary survey", "fecal exam", "complete orthopedic exam", "dental cleaning"], c: 0 },
+      { q: "In the primary survey, A stands for airway and:", a: ["attitude", "abdomen", "appetite", "arthritis"], c: 0 },
+      { q: "In the primary survey, B stands for breathing and:", a: ["bleeding", "bladder", "bone", "behavior"], c: 0 },
+      { q: "In the primary survey, C stands for cardiovascular and:", a: ["circulation", "coat", "color", "cranium"], c: 0 },
+      { q: "The three actions used in triage are:", a: ["look, listen, feel", "stop, drop, roll", "palpate, x-ray, sedate", "clip, clean, close"], c: 0 },
 
-current = queue[qIndex];
+      { q: "Labored breathing is described as:", a: ["prolonged and deep", "short and silent", "slow and absent", "always normal"], c: 0 },
+      { q: "Restrictive breathing patterns can be:", a: ["fast, short, and shallow", "slow and deep", "silent and easy", "only nasal"], c: 0 },
+      { q: "Orthopnea means maintaining a specific posture to ease:", a: ["breathing", "defecation", "walking", "vision"], c: 0 },
+      { q: "Cats in shock often present with __________ rather than tachycardia.", a: ["bradycardia", "tachypnea", "normal pulse", "hypertension"], c: 0 },
+      { q: "A neurologic exam in emergencies helps determine whether evidence of traumatic brain injury is present:", a: ["true", "false", "only in horses", "only after surgery"], c: 0 },
 
-progress.innerText = `Question ${qIndex+1} of ${totalQ}`;
-question.innerText = current.q;
+      { q: "A stuporous animal reacts only to painful or prolonged:", a: ["stimuli", "feeding", "walking", "grooming"], c: 0 },
+      { q: "A comatose animal does not react to any:", a: ["stimulus", "owner voice only", "food", "light only"], c: 0 },
+      { q: "Mydriatic pupils are:", a: ["dilated", "constricted", "unequal", "blue"], c: 0 },
+      { q: "Schiff-Sherrington posture is associated with a:", a: ["T3-L3 spinal cord lesion", "kidney lesion", "liver lesion", "skin lesion"], c: 0 },
+      { q: "At 5% dehydration, the slide lists:", a: ["mild dry mucous membranes", "shock", "sunken eyes", "coma"], c: 0 },
 
-answers.innerHTML = "";
+      { q: "At 10% dehydration, one listed sign is:", a: ["sunken eyes", "increased appetite", "weight gain", "normal pulses"], c: 0 },
+      { q: "Shock results from altered blood flow or impaired oxygen delivery to the:", a: ["tissues", "food bowl", "kennel", "fur"], c: 0 },
+      { q: "Hypovolemic shock in cats and dogs is commonly caused by trauma, hemorrhage, and severe:", a: ["vomiting/diarrhea", "alopecia", "otitis", "arthritis"], c: 0 },
+      { q: "Chest compressions during CPR should be delivered at:", a: ["100-120 per minute", "20 per minute", "50 per minute", "200 per minute"], c: 0 },
+      { q: "During CPR, recommended respirations are:", a: ["10 per minute", "1 per minute", "25 per minute", "50 per minute"], c: 0 }
+    ];
 
-let shuffled = current.a.map((a,i)=>({text:a,correct:i===current.c}))
-.sort(()=>Math.random()-0.5);
+    // -----------------------------
+    // APP STATE
+    // -----------------------------
+    let mode = "confidence";
+    let activeQuestions = [];
+    let currentIndex = 0;
+    let currentQuestion = null;
+    let score = 0;
+    let missed = [];
+    let answeredCurrent = false;
+    let confidenceValue = null;
 
-shuffled.forEach(item=>{
-let btn = document.createElement("button");
-btn.innerText = item.text;
-btn.className = "answer";
-btn.onclick = ()=>handleAnswer(item.correct,btn,item.text);
-answers.appendChild(btn);
-});
+    // -----------------------------
+    // HELPERS
+    // -----------------------------
+    function getEl(id) {
+      return document.getElementById(id);
+    }
 
-}
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
 
-// ================= ANSWER =================
-function handleAnswer(correct,btn,text){
+    function setMode(newMode) {
+      mode = newMode;
+      alert("Mode set to: " + newMode);
+    }
 
-let buttons = document.querySelectorAll(".answer");
-buttons.forEach(b=>b.disabled=true);
+    function startCategory(category) {
+      if (category === "fluid") activeQuestions = [...fluid];
+      if (category === "history") activeQuestions = [...history];
+      if (category === "emergency") activeQuestions = [...emergency];
+      startQuiz();
+    }
 
-if(correct){
-score++;
-if(mode!=="exam") btn.classList.add("correct");
-}else{
-if(mode!=="exam") btn.classList.add("wrong");
+    function startMixed() {
+      activeQuestions = [...fluid, ...history, ...emergency];
+      startQuiz();
+    }
 
-missed.push({
-question: current.q,
-correctAnswer: current.a[current.c]
-});
-}
+    function startQuiz() {
+      activeQuestions = shuffle(activeQuestions);
+      currentIndex = 0;
+      score = 0;
+      missed = [];
+      answeredCurrent = false;
+      confidenceValue = null;
 
-if(mode!=="exam"){
-buttons.forEach(b=>{
-if(b.innerText===current.a[current.c]){
-b.classList.add("correct");
-}
-});
-}
+      getEl("menuScreen").classList.add("hidden");
+      getEl("resultsScreen").classList.add("hidden");
+      getEl("gameScreen").classList.remove("hidden");
 
-}
+      getEl("modeLabel").textContent = "Mode: " + mode;
+      getEl("scoreLine").textContent = mode === "exam" ? "" : "Score: 0 / 0";
+      renderQuestion();
+    }
 
-// ================= NEXT =================
-function nextQuestion(){
-qIndex++;
-showQuestion();
-}
+    function renderQuestion() {
+      if (currentIndex >= activeQuestions.length) {
+        showResults();
+        return;
+      }
 
-// ================= RESULTS =================
-function showResults(){
+      currentQuestion = activeQuestions[currentIndex];
+      answeredCurrent = false;
+      confidenceValue = null;
 
-game.classList.add("hidden");
-results.classList.remove("hidden");
+      getEl("progress").textContent =
+        "Question " + (currentIndex + 1) + " of " + activeQuestions.length;
 
-let percent = Math.round((score/totalQ)*100);
+      getEl("questionText").textContent = currentQuestion.q;
+      getEl("feedback").textContent = "";
+      getEl("nextBtn").disabled = true;
 
-resultScore.innerText = `Score: ${score} / ${totalQ}`;
-resultPercent.innerText = `Percent: ${percent}%`;
-resultStatus.innerText = percent>=70 ? "PASS" : "Needs Review";
+      const answersBox = getEl("answersBox");
+      answersBox.innerHTML = "";
 
-missedList.innerHTML="";
+      const shuffledAnswers = shuffle(
+        currentQuestion.a.map((text, index) => ({
+          text,
+          correct: index === currentQuestion.c
+        }))
+      );
 
-missed.forEach(item=>{
-let li=document.createElement("li");
-li.innerHTML = `<strong>${item.question}</strong><br>Correct: ${item.correctAnswer}`;
-missedList.appendChild(li);
-});
-}
+      shuffledAnswers.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.textContent = item.text;
+        btn.dataset.correct = item.correct ? "true" : "false";
+        btn.onclick = () => handleAnswer(item.correct, btn);
+        answersBox.appendChild(btn);
+      });
 
-// ================= UTIL =================
-function shuffle(a){
-for(let i=a.length-1;i>0;i--){
-let j=Math.floor(Math.random()*(i+1));
-[a[i],a[j]]=[a[j],a[i]];
-}
-}
+      if (mode === "confidence") {
+        getEl("confidenceBox").classList.remove("hidden");
+        answersBox.classList.add("hidden");
+      } else {
+        getEl("confidenceBox").classList.add("hidden");
+        answersBox.classList.remove("hidden");
+      }
+    }
 
-function home(){
-location.reload();
-}
+    function setConfidence(value) {
+      confidenceValue = value;
+      getEl("confidenceBox").classList.add("hidden");
+      getEl("answersBox").classList.remove("hidden");
+    }
 
-</script>
+    function handleAnswer(isCorrect, clickedBtn) {
+      if (answeredCurrent) return;
+      answeredCurrent = true;
 
+      const buttons = Array.from(document.querySelectorAll(".answer-btn"));
+      buttons.forEach(btn => btn.disabled = true);
+
+      if (isCorrect) {
+        score += 1;
+        if (mode !== "exam") {
+          clickedBtn.classList.add("correct");
+        }
+      } else {
+        if (mode !== "exam") {
+          clickedBtn.classList.add("wrong");
+        }
+        missed.push({
+          question: currentQuestion.q,
+          correctAnswer: currentQuestion.a[currentQuestion.c]
+        });
+      }
+
+      if (mode !== "exam") {
+        buttons.forEach(btn => {
+          if (btn.dataset.correct === "true") {
+            btn.classList.add("correct");
+          }
+        });
+
+        if (mode === "study") {
+          getEl("feedback").textContent = isCorrect ? "Correct!" : "Incorrect — review.";
+        }
+
+        if (mode === "confidence") {
+          if (confidenceValue === true && isCorrect) {
+            getEl("feedback").textContent = "Correct.";
+          } else if (confidenceValue === true && !isCorrect) {
+            getEl("feedback").textContent = "You thought you knew it — review this one.";
+          } else if (confidenceValue === false && isCorrect) {
+            getEl("feedback").textContent = "Nice — you knew more than you thought.";
+          } else if (confidenceValue === false && !isCorrect) {
+            getEl("feedback").textContent = "Good catch marking it unsure.";
+          }
+        }
+
+        getEl("scoreLine").textContent =
+          "Score: " + score + " / " + (currentIndex + 1);
+      }
+
+      getEl("nextBtn").disabled = false;
+    }
+
+    function nextQuestion() {
+      if (!answeredCurrent) return;
+      currentIndex += 1;
+      renderQuestion();
+    }
+
+    function showResults() {
+      getEl("gameScreen").classList.add("hidden");
+      getEl("resultsScreen").classList.remove("hidden");
+
+      const total = activeQuestions.length;
+      const percent = total ? Math.round((score / total) * 100) : 0;
+
+      getEl("resultScore").textContent = "Score: " + score + " / " + total;
+      getEl("resultPercent").textContent = "Percent: " + percent + "%";
+      getEl("resultStatus").textContent = percent >= 70 ? "PASS" : "Needs Review";
+
+      const list = getEl("missedList");
+      list.innerHTML = "";
+
+      if (missed.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "None missed. Great job.";
+        list.appendChild(li);
+      } else {
+        missed.forEach(item => {
+          const li = document.createElement("li");
+          li.innerHTML =
+            "<strong>" + item.question + "</strong><br>Correct answer: " + item.correctAnswer;
+          list.appendChild(li);
+        });
+      }
+    }
+
+    function goHome() {
+      location.reload();
+    }
+  </script>
 </body>
 </html>
