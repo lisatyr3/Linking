@@ -2,214 +2,217 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vet Tech Trainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find the Link</title>
+
 <style>
-body { font-family: Arial; max-width: 900px; margin: 40px auto; text-align: center; }
-button { padding: 12px; margin: 6px; border-radius: 10px; border: none; cursor: pointer; }
-.answer { display:block; width:100%; margin:8px 0; background:#eee; }
-.correct { background:#4CAF50; color:#fff; }
-.wrong { background:#f44336; color:#fff; }
-.hidden { display:none; }
-#question { font-size:22px; margin:20px 0; }
-#missedList { text-align:left; }
+body{
+font-family:Arial;
+background:#f3f4f4;
+padding:16px;
+margin:0;
+}
+
+.wrap{
+max-width:700px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:20px;
+box-shadow:0 3px 10px rgba(0,0,0,.1);
+text-align:center;
+}
+
+h1{color:#2d8a78;}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin-top:20px;
+}
+
+.word{
+padding:14px;
+background:#e5e5e5;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.selected{
+background:#2d8a78;
+color:white;
+}
+
+.correct{
+background:#8bc34a;
+color:white;
+}
+
+button{
+margin-top:20px;
+padding:12px 18px;
+border:none;
+border-radius:8px;
+background:#2d8a78;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+.message{
+margin-top:15px;
+font-weight:bold;
+font-size:18px;
+}
 </style>
 </head>
 
 <body>
 
-<h1>Vet Tech Trainer</h1>
+<div class="wrap">
 
-<div id="menu">
-<h2>Mode</h2>
-<button onclick="setMode('confidence')">Confidence</button>
-<button onclick="setMode('study')">Study</button>
-<button onclick="setMode('exam')">Exam</button>
+<h1>Find the Link</h1>
+<p>Select 4 words that belong together.</p>
 
-<h2>Category</h2>
-<button onclick="startCategory('fluid')">Fluid</button>
-<button onclick="startCategory('history')">History</button>
-<button onclick="startCategory('emergency')">Emergency</button>
-<button onclick="startMixed()">Full Exam</button>
-</div>
+<div class="grid" id="grid"></div>
 
-<div id="game" class="hidden">
-<h3 id="modeLabel"></h3>
-<div id="progress"></div>
-<div id="question"></div>
-<div id="answers"></div>
-<button id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
-<button onclick="location.reload()">Home</button>
-</div>
+<button onclick="submitGroup()">Submit Group</button>
 
-<div id="results" class="hidden">
-<h2>Results</h2>
-<div id="score"></div>
-<div id="percent"></div>
-<ul id="missedList"></ul>
-<button onclick="location.reload()">Home</button>
+<div class="message" id="message"></div>
+
 </div>
 
 <script>
 
-let mode="exam";
-let questions=[];
-let index=0;
-let score=0;
-let missed=[];
+/* PUZZLES */
 
-// ===== 25 PER CATEGORY (guaranteed) =====
-function buildQuestions(prefix){
-let arr=[];
-for(let i=1;i<=25;i++){
-arr.push({
-q:`${prefix} Question ${i}`,
-a:["Correct Answer","Wrong A","Wrong B","Wrong C"],
-c:0
+const puzzles = [
+
+{
+groups:[
+["ROSE","LILY","TULIP","DAISY"],
+["DOG","CAT","HORSE","COW"],
+["RED","BLUE","GREEN","YELLOW"],
+["CHAIR","TABLE","COUCH","BED"]
+]
+},
+
+{
+groups:[
+["MERCURY","VENUS","EARTH","MARS"],
+["GOLD","SILVER","IRON","COPPER"],
+["SPRING","SUMMER","FALL","WINTER"],
+["JUMP","HOP","LEAP","BOUND"]
+]
+},
+
+{
+groups:[
+["APPLE","PEAR","PLUM","PEACH"],
+["CAR","TRUCK","VAN","SUV"],
+["SOFA","CHAIR","DESK","TABLE"],
+["RUN","WALK","JOG","SPRINT"]
+]
+}
+
+];
+
+/* GAME STATE */
+
+let puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
+let words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
+let selected = [];
+let solved = [];
+
+/* DRAW */
+
+function draw(){
+
+let gridHTML = "";
+
+words.forEach(word=>{
+let cls = "word";
+
+if(selected.includes(word)) cls += " selected";
+if(solved.includes(word)) cls += " correct";
+
+gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
 });
-}
-return arr;
-}
 
-const fluid = buildQuestions("Fluid");
-const history = buildQuestions("History");
-const emergency = buildQuestions("Emergency");
-
-// ===== MODE =====
-function setMode(m){
-mode=m;
-alert("Mode: "+m);
+document.getElementById("grid").innerHTML = gridHTML;
 }
 
-// ===== START =====
-function startCategory(cat){
-if(cat==="fluid") questions=[...fluid];
-if(cat==="history") questions=[...history];
-if(cat==="emergency") questions=[...emergency];
+/* SELECT */
 
-console.log("Category count:", questions.length); // SHOULD BE 25
+function toggle(word){
 
-start();
+if(solved.includes(word)) return;
+
+if(selected.includes(word)){
+selected = selected.filter(w=>w!==word);
+}else{
+if(selected.length < 4){
+selected.push(word);
+}
 }
 
-function startMixed(){
-questions=[...fluid,...history,...emergency];
-console.log("Full exam count:", questions.length); // SHOULD BE 75
-start();
+draw();
 }
 
-function start(){
-index=0;
-score=0;
-missed=[];
-shuffle(questions);
+/* CHECK */
 
-menu.classList.add("hidden");
-game.classList.remove("hidden");
+function submitGroup(){
 
-modeLabel.innerText="Mode: "+mode;
-
-showQuestion();
-}
-
-// ===== QUESTION =====
-function showQuestion(){
-
-if(index >= questions.length){
-showResults();
+if(selected.length !== 4){
+document.getElementById("message").textContent = "Select 4 words";
 return;
 }
 
-let q = questions[index];
+let isCorrect = puzzle.groups.some(group =>
+group.every(word => selected.includes(word))
+);
 
-progress.innerText=`Question ${index+1} of ${questions.length}`;
-question.innerText=q.q;
+if(isCorrect){
 
-answers.innerHTML="";
-nextBtn.disabled=true;
+selected.forEach(w => solved.push(w));
+selected = [];
 
-let shuffled = q.a.map((a,i)=>({text:a,correct:i===q.c}))
-.sort(()=>Math.random()-0.5);
-
-shuffled.forEach(item=>{
-let btn=document.createElement("button");
-btn.innerText=item.text;
-btn.className="answer";
-
-btn.onclick=()=>{
-handleAnswer(item.correct,btn,q);
-};
-
-answers.appendChild(btn);
-});
-
-}
-
-// ===== ANSWER =====
-function handleAnswer(correct,btn,q){
-
-document.querySelectorAll(".answer").forEach(b=>b.disabled=true);
-
-if(correct){
-score++;
-if(mode!=="exam") btn.classList.add("correct");
+if(solved.length === 16){
+document.getElementById("message").innerHTML = `
+🎉 You solved it!<br>
+<button onclick="nextPuzzle()">Play Another Puzzle</button>
+`;
 }else{
-if(mode!=="exam") btn.classList.add("wrong");
-
-missed.push({
-question:q.q,
-answer:q.a[q.c]
-});
+document.getElementById("message").textContent = "Nice! Keep going";
 }
 
-if(mode!=="exam"){
-document.querySelectorAll(".answer").forEach(b=>{
-if(b.innerText===q.a[q.c]){
-b.classList.add("correct");
-}
-});
+}else{
+document.getElementById("message").textContent = "Try again";
+selected = [];
 }
 
-nextBtn.disabled=false;
+draw();
 }
 
-// ===== NEXT =====
-function nextQuestion(){
-index++;
-showQuestion();
+/* NEXT PUZZLE */
+
+function nextPuzzle(){
+
+puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
+words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
+selected = [];
+solved = [];
+
+document.getElementById("message").textContent="";
+
+draw();
 }
 
-// ===== RESULTS =====
-function showResults(){
+/* START */
 
-game.classList.add("hidden");
-results.classList.remove("hidden");
-
-let pct=Math.round((score/questions.length)*100);
-
-scoreDiv=document.getElementById("score");
-percentDiv=document.getElementById("percent");
-
-scoreDiv.innerText=`Score: ${score} / ${questions.length}`;
-percentDiv.innerText=`Percent: ${pct}%`;
-
-let list=document.getElementById("missedList");
-list.innerHTML="";
-
-missed.forEach(m=>{
-let li=document.createElement("li");
-li.innerHTML=`<strong>${m.question}</strong><br>Correct: ${m.answer}`;
-list.appendChild(li);
-});
-
-}
-
-// ===== UTIL =====
-function shuffle(a){
-for(let i=a.length-1;i>0;i--){
-let j=Math.floor(Math.random()*(i+1));
-[a[i],a[j]]=[a[j],a[i]];
-}
-}
+draw();
 
 </script>
 
