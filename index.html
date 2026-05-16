@@ -7,64 +7,118 @@
 
 <style>
 body{
-font-family:Arial;
-background:#f3f4f4;
-padding:16px;
-margin:0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background:#f3f4f4;
+  padding:16px;
+  margin:0;
 }
 
 .wrap{
-max-width:700px;
-margin:auto;
-background:white;
-padding:20px;
-border-radius:20px;
-box-shadow:0 3px 10px rgba(0,0,0,.1);
-text-align:center;
+  max-width: 550px;
+  margin: auto;
+  background: white;
+  padding: 24px;
+  border-radius: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,.08);
+  text-align: center;
 }
 
-h1{color:#2d8a78;}
+h1 { color: #2d8a78; margin: 0 0 4px; }
+.sub { color: #666; margin: 0 0 20px; font-size: 0.95rem; }
+
+/* The layout rows container for completed groups */
+.solved-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.solved-row {
+  padding: 16px;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+/* Color difficulty tiers */
+.tier-0 { background: #fbd043; color: #222; } /* Easy */
+.tier-1 { background: #b5e37d; color: #222; } /* Medium */
+.tier-2 { background: #b0c4de; color: #222; } /* Hard */
+.tier-3 { background: #ba93df; color: #fff; } /* Tricky */
 
 .grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:10px;
-margin-top:20px;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:10px;
 }
 
 .word{
-padding:14px;
-background:#e5e5e5;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
+  aspect-ratio: 1 / 1;
+  background:#efefe3;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  word-break: break-word;
+  user-select: none;
+  transition: all 0.1s ease;
 }
+
+.word:hover { background: #e2e2d5; }
 
 .selected{
-background:#2d8a78;
-color:white;
+  background:#5a5d64 !important;
+  color:white;
 }
 
-.correct{
-background:#8bc34a;
-color:white;
+.lives {
+  margin: 18px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: #2d8a78;
+  border-radius: 50%;
+  margin: 0 3px;
+}
+.dot.lost { background: #ddd; }
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 button{
-margin-top:20px;
-padding:12px 18px;
-border:none;
-border-radius:8px;
-background:#2d8a78;
-color:white;
-font-size:16px;
-cursor:pointer;
+  padding:12px 20px;
+  border:none;
+  border-radius:24px;
+  background:#2d8a78;
+  color:white;
+  font-size:15px;
+  font-weight: bold;
+  cursor:pointer;
+}
+button.secondary {
+  background: #e5e5e5;
+  color: #333;
 }
 
 .message{
-margin-top:15px;
-font-weight:bold;
-font-size:18px;
+  margin-top:20px;
+  font-weight:bold;
+  font-size:16px;
+  min-height: 24px;
 }
 </style>
 </head>
@@ -73,148 +127,186 @@ font-size:18px;
 
 <div class="wrap">
 
-<h1>Find the Link</h1>
-<p>Select 4 words that belong together.</p>
+  <h1>Find the Link</h1>
+  <p class="sub">Group words into 4 sets of 4 interconnected items!</p>
 
-<div class="grid" id="grid"></div>
+  <div id="solvedContainer" class="solved-container"></div>
+  <div class="grid" id="grid"></div>
 
-<button onclick="submitGroup()">Submit Group</button>
+  <div class="lives" id="lives"></div>
 
-<div class="message" id="message"></div>
+  <div class="actions">
+    <button onclick="submitGroup()">Submit Group</button>
+    <button class="secondary" onclick="deselectAll()">Deselect All</button>
+  </div>
+
+  <div class="message" id="message"></div>
 
 </div>
 
 <script>
 
-/* PUZZLES */
-
+/* ===================================================================
+   TRICKY OVERLAPPING PUZZLES
+   =================================================================== */
 const puzzles = [
-
-{
-groups:[
-["ROSE","LILY","TULIP","DAISY"],
-["DOG","CAT","HORSE","COW"],
-["RED","BLUE","GREEN","YELLOW"],
-["CHAIR","TABLE","COUCH","BED"]
-]
-},
-
-{
-groups:[
-["MERCURY","VENUS","EARTH","MARS"],
-["GOLD","SILVER","IRON","COPPER"],
-["SPRING","SUMMER","FALL","WINTER"],
-["JUMP","HOP","LEAP","BOUND"]
-]
-},
-
-{
-groups:[
-["APPLE","PEAR","PLUM","PEACH"],
-["CAR","TRUCK","VAN","SUV"],
-["SOFA","CHAIR","DESK","TABLE"],
-["RUN","WALK","JOG","SPRINT"]
-]
-}
-
+  {
+    // Puzzle 1: Overlaps with things you drive, things with keys, and colors
+    groups: [
+      { name: "Colors", words: ["RED", "BLUE", "GREEN", "ORANGE"] },
+      { name: "Fruits", words: ["APPLE", "BANANA", "PEACH", "CHERRY"] }, // Note: Orange could go here!
+      { name: "Musical Instruments", words: ["PIANO", "ORGAN", "FLUTE", "DRUM"] },
+      { name: "Things with keys", words: ["KEYBOARD", "LOCK", "MAP", "CHORD"] } // Note: Piano & Organ have keys!
+    ]
+  },
+  {
+    // Puzzle 2: Overlaps with animals, dog traits, and actions
+    groups: [
+      { name: "Types of Shoes", words: ["BOOT", "PUMP", "LOAFER", "SNEAKER"] },
+      { name: "Things that pump", words: ["HEART", "BICYCLE", "GAS STATION", "IRON"] }, // Note: Pump can fit here!
+      { name: "Insects", words: ["ANT", "FLEA", "BEETLE", "CRICKET"] },
+      { name: "Games played with a ball", words: ["SOCCER", "TENNIS", "GOLF", "POOL"] } // Note: Cricket is a game!
+    ]
+  }
 ];
 
 /* GAME STATE */
-
-let puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
-let words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
+let puzzle;
+let activeWords = [];
 let selected = [];
-let solved = [];
+let solvedGroups = [];
+let mistakesLeft = 4;
+let gameOver = false;
 
-/* DRAW */
+function initGame() {
+  puzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+  
+  // Flatten words out of their structural objects
+  activeWords = [];
+  puzzle.groups.forEach(g => {
+    g.words.forEach(w => activeWords.push(w));
+  });
+  
+  // Shuffle layout
+  activeWords.sort(() => Math.random() - 0.5);
+  
+  selected = [];
+  solvedGroups = [];
+  mistakesLeft = 4;
+  gameOver = false;
+  
+  document.getElementById("message").textContent = "";
+  document.getElementById("message").style.color = "#333";
+  
+  draw();
+}
 
+/* DRAW RENDERING LAYER */
 function draw(){
+  // 1. Render Solved Rows at top
+  const solvedContainer = document.getElementById("solvedContainer");
+  solvedContainer.innerHTML = "";
+  
+  solvedGroups.forEach((group, index) => {
+    const row = document.createElement("div");
+    row.className = `solved-row tier-${index}`;
+    row.innerHTML = `<strong>${group.name}:</strong> ${group.words.join(", ")}`;
+    solvedContainer.appendChild(row);
+  });
 
-let gridHTML = "";
+  // 2. Render Remaining Interactive Active Words Grid
+  let gridHTML = "";
+  activeWords.forEach(word => {
+    let cls = "word";
+    if(selected.includes(word)) cls += " selected";
+    gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
+  });
+  document.getElementById("grid").innerHTML = gridHTML;
 
-words.forEach(word=>{
-let cls = "word";
-
-if(selected.includes(word)) cls += " selected";
-if(solved.includes(word)) cls += " correct";
-
-gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
-});
-
-document.getElementById("grid").innerHTML = gridHTML;
+  // 3. Render Mistakes/Lives indicator
+  let livesHTML = "Mistakes Remaining: ";
+  for(let i=0; i<4; i++) {
+    livesHTML += `<span class="dot ${i >= mistakesLeft ? 'lost' : ''}"></span>`;
+  }
+  document.getElementById("lives").innerHTML = livesHTML;
 }
 
-/* SELECT */
-
+/* TRACK SELECTION STATES */
 function toggle(word){
+  if(gameOver) return;
 
-if(solved.includes(word)) return;
-
-if(selected.includes(word)){
-selected = selected.filter(w=>w!==word);
-}else{
-if(selected.length < 4){
-selected.push(word);
-}
-}
-
-draw();
+  if(selected.includes(word)){
+    selected = selected.filter(w => w !== word);
+  } else {
+    if(selected.length < 4){
+      selected.push(word);
+    }
+  }
+  draw();
 }
 
-/* CHECK */
+function deselectAll() {
+  if(gameOver) return;
+  selected = [];
+  draw();
+}
 
+/* MATCH SUBMIT LOGIC ENGINE */
 function submitGroup(){
+  if(gameOver) return;
 
-if(selected.length !== 4){
-document.getElementById("message").textContent = "Select 4 words";
-return;
+  const msg = document.getElementById("message");
+  msg.style.color = "#333";
+
+  if(selected.length !== 4){
+    msg.textContent = "Select exactly 4 words!";
+    return;
+  }
+
+  // Look for exact matches against valid structural categories
+  let matchedGroup = puzzle.groups.find(group => 
+    group.words.every(w => selected.includes(w))
+  );
+
+  if(matchedGroup) {
+    // Check if this specific group wasn't already pulled out
+    if(!solvedGroups.some(g => g.name === matchedGroup.name)) {
+      solvedGroups.push(matchedGroup);
+      
+      // Filter linked words out of active active grid array
+      activeWords = activeWords.filter(w => !selected.includes(w));
+      selected = [];
+      
+      msg.textContent = "Awesome match found!";
+      msg.style.color = "#146c2e";
+
+      if(solvedGroups.length === 4){
+        gameOver = true;
+        msg.innerHTML = `🎉 Perfect Score! You solved it!<br><br><button onclick="initGame()">Play Next Puzzle</button>`;
+      }
+      
+      draw();
+      return;
+    }
+  }
+
+  // If match logic fails completely: punish strike count
+  mistakesLeft--;
+  msg.textContent = "Not quite a matching group. Try again!";
+  msg.style.color = "#a11";
+  selected = [];
+
+  if(mistakesLeft <= 0) {
+    gameOver = true;
+    msg.innerHTML = `❌ Game Over! Better luck next time.<br><br><button onclick="initGame()">Try Again</button>`;
+  }
+
+  draw();
 }
 
-let isCorrect = puzzle.groups.some(group =>
-group.every(word => selected.includes(word))
-);
-
-if(isCorrect){
-
-selected.forEach(w => solved.push(w));
-selected = [];
-
-if(solved.length === 16){
-document.getElementById("message").innerHTML = `
-🎉 You solved it!<br>
-<button onclick="nextPuzzle()">Play Another Puzzle</button>
-`;
-}else{
-document.getElementById("message").textContent = "Nice! Keep going";
-}
-
-}else{
-document.getElementById("message").textContent = "Try again";
-selected = [];
-}
-
-draw();
-}
-
-/* NEXT PUZZLE */
-
-function nextPuzzle(){
-
-puzzle = puzzles[Math.floor(Math.random()*puzzles.length)];
-words = puzzle.groups.flat().sort(()=>Math.random()-0.5);
-selected = [];
-solved = [];
-
-document.getElementById("message").textContent="";
-
-draw();
-}
-
-/* START */
-
-draw();
+// Global Launch Setup Execution
+initGame();
 
 </script>
-
 </body>
 </html>
