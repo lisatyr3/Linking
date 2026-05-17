@@ -26,7 +26,6 @@ body{
 h1 { color: #2d8a78; margin: 0 0 4px; }
 .sub { color: #666; margin: 0 0 20px; font-size: 0.95rem; }
 
-/* The layout rows container for completed groups */
 .solved-container {
   display: flex;
   flex-direction: column;
@@ -43,11 +42,10 @@ h1 { color: #2d8a78; margin: 0 0 4px; }
   font-size: 0.9rem;
   letter-spacing: 0.5px;
 }
-/* Color difficulty tiers */
-.tier-0 { background: #fbd043; color: #222; } /* Easy */
-.tier-1 { background: #b5e37d; color: #222; } /* Medium */
-.tier-2 { background: #b0c4de; color: #222; } /* Hard */
-.tier-3 { background: #ba93df; color: #fff; } /* Tricky */
+.tier-0 { background: #fbd043; color: #222; } 
+.tier-1 { background: #b5e37d; color: #222; } 
+.tier-2 { background: #b0c4de; color: #222; } 
+.tier-3 { background: #ba93df; color: #fff; } 
 
 .grid{
   display:grid;
@@ -158,9 +156,10 @@ button.next-btn {
 <script>
 
 /* ===================================================================
-   THE INFINITE MASTER CATEGORY LIBRARY
+   THE MASSIVE INFINITE MASTER CATEGORY LIBRARY (71 TOTAL)
    =================================================================== */
 const masterCategories = [
+  // --- ORIGINAL 21 CATEGORIES ---
   { name: "Colors", words: ["RED", "BLUE", "GREEN", "ORANGE"] },
   { name: "Fruits", words: ["APPLE", "BANANA", "PEACH", "CHERRY"] },
   { name: "Musical Instruments", words: ["PIANO", "ORGAN", "FLUTE", "DRUM"] },
@@ -181,7 +180,59 @@ const masterCategories = [
   { name: "Things that fly", words: ["BIRD", "PLANE", "KITE", "ROCKET"] },
   { name: "Liquid Measures", words: ["OUNCE", "CUP", "PINT", "QUART"] },
   { name: "Types of Houses", words: ["CABIN", "CONDO", "MANSION", "COTTAGE"] },
-  { name: "Parts of a Book", words: ["COVER", "PAGE", "CHAPTER", "INDEX"] }
+  { name: "Parts of a Book", words: ["COVER", "PAGE", "CHAPTER", "INDEX"] },
+
+  // --- NEW SNEAKY OVERLAPPING ADDITIONS (50 MORE) ---
+  { name: "Candy Bars", words: ["MARS", "CRUNCH", "BOUNTY", "BAR"] },
+  { name: "Places to get a drink", words: ["BAR", "PUB", "TAVERN", "SALOON"] },
+  { name: "Things with a shell", words: ["TURTLE", "SNAIL", "EGG", "NUT"] },
+  { name: "Water hazards", words: ["WAVE", "TIDE", "CURRENT", "SHARK"] },
+  { name: "Things you wrap", words: ["GIFT", "TOWEL", "BURRITO", "SCARF"] },
+  { name: "Types of Knots", words: ["BOW", "HITCH", "LOOP", "SQUARE"] },
+  { name: "Archery equipment", words: ["BOW", "ARROW", "TARGET", "QUIVER"] },
+  { name: "Parts of a Ship", words: ["BOW", "STERN", "DECK", "MAST"] },
+  { name: "Things with zippers", words: ["JACKET", "JEANS", "TENT", "PURSE"] },
+  { name: "Dogs breeds", words: ["BOXER", "PUDEL", "HUSKY", "LAB"] },
+  { name: "Sports combatants", words: ["BOXER", "WRESTLER", "FIGHTER", "FENCER"] },
+  { name: "In a toolbox", words: ["HAMMER", "SAW", "WRENCH", "PLIERS"] },
+  { name: "Shark varieties", words: ["HAMMER", "TIGER", "BULL", "WHALE"] },
+  { name: "Felines", words: ["TIGER", "LION", "LEOPARD", "CAT"] },
+  { name: "Things that are green", words: ["LEAF", "GRASS", "FROG", "MINT"] },
+  { name: "Flavor aromatic herbs", words: ["MINT", "BASIL", "THYME", "SAGE"] },
+  { name: "Wise people", words: ["SAGE", "GURU", "EXPERT", "WIZARD"] },
+  { name: "Weather conditions", words: ["CLOUD", "FOG", "WIND", "STORM"] },
+  { name: "Internet storage terms", words: ["CLOUD", "DRIVE", "SERVER", "HOST"] },
+  { name: "Golfing words", words: ["DRIVE", "TEE", "GREEN", "PUTT"] },
+  { name: "Beverages", words: ["TEA", "COFFEE", "MILK", "JUICE"] },
+  { name: "Kinds of cheese", words: ["SWISS", "CHEDDAR", "BRIE", "GOUDA"] },
+  { name: "European countries", words: ["SWISS", "FRANCE", "ITALY", "SPAIN"] },
+  { name: "Spices", words: ["PEPPER", "CLOVE", "GINGER", "CINNAMON"] },
+  { name: "Parts of a hand", words: ["PALM", "THUMB", "FINGER", "WRIST"] },
+  { name: "Types of trees", words: ["PALM", "OAK", "WILLOW", "BIRCH"] },
+  { name: "Things with strings", words: ["BOW", "KITE", "YARN", "GUITAR"] },
+  { name: "Units of time", words: ["SECOND", "MINUTE", "HOUR", "DAY"] },
+  { name: "Order placements", words: ["FIRST", "SECOND", "THIRD", "LAST"] },
+  { name: "Baseball terms", words: ["STRIKE", "BALL", "BASE", "GLOVE"] },
+  { name: "Bowling actions", words: ["STRIKE", "SPARE", "FRAME", "SPLIT"] },
+  { name: "Protest events", words: ["STRIKE", "BOYCOTT", "MARCH", "RALLY"] },
+  { name: "Types of bread", words: ["RYE", "WHEAT", "SOURDOUGH", "WHITE"] },
+  { name: "Breakfast staples", words: ["EGG", "BACON", "TOAST", "PANCAKE"] },
+  { name: "Things that toast", words: ["OVEN", "FIRE", "SUN", "SPEECH"] },
+  { name: "Monetary currencies", words: ["DOLLAR", "EURO", "YEN", "POUND"] },
+  { name: "Weight metrics", words: ["POUND", "TON", "GRAM", "OUNCE"] },
+  { name: "Things you hit", words: ["DRUM", "NAIL", "BALL", "TARGET"] },
+  { name: "Baked desserts", words: ["PIE", "CAKE", "COOKIE", "TART"] },
+  { name: "Math concepts", words: ["PIE", "ANGLE", "GRAPH", "MATRIX"] },
+  { name: "Geometric shapes", words: ["SQUARE", "CIRCLE", "CONE", "CUBE"] },
+  { name: "Famous cities", words: ["SQUARE", "NEW YORK", "MIAMI", "BOSTON"] },
+  { name: "Citrus fruits", words: ["ORANGE", "LEMON", "LIME", "GRAPEFRUIT"] },
+  { name: "Baking ingredients", words: ["FLOUR", "SUGAR", "YEAST", "BUTTER"] },
+  { name: "Yellow things", words: ["BANANA", "LEMON", "CORN", "SUN"] },
+  { name: "Body organs", words: ["HEART", "LIVER", "LUNG", "KIDNEY"] },
+  { name: "Cardiovascular parts", words: ["HEART", "VEIN", "ARTERY", "VALVE"] },
+  { name: "Plumbing components", words: ["PIPE", "VALVE", "DRAIN", "FAUCET"] },
+  { name: "Smoking apparatus", words: ["PIPE", "CIGAR", "MATCH", "LIGHTER"] },
+  { name: "Fire starters", words: ["MATCH", "FLINT", "SPARK", "WOOD"] }
 ];
 
 /* GAME STATE */
@@ -192,30 +243,25 @@ let solvedGroups = [];
 let mistakesLeft = 4;
 let gameOver = false;
 
-// Generates a completely new randomized puzzle configuration on the fly
 function generateDynamicPuzzle() {
-  // Shallow copy the array so we don't alter the original bank
   let pool = [...masterCategories];
   let selectedGroups = [];
   
-  // Pull 4 random, distinct category blocks out of the bank
   for (let i = 0; i < 4; i++) {
     const randomIndex = Math.floor(Math.random() * pool.length);
     selectedGroups.push(pool[randomIndex]);
-    pool.splice(randomIndex, 1); // Remove it so we don't select duplicates
+    pool.splice(randomIndex, 1); 
   }
   
   puzzle = { groups: selectedGroups };
 }
 
 function initGame() {
-  // Map out dynamic words
   activeWords = [];
   puzzle.groups.forEach(g => {
     g.words.forEach(w => activeWords.push(w));
   });
   
-  // Shuffle layout smoothly
   activeWords.sort(() => Math.random() - 0.5);
   
   selected = [];
@@ -223,7 +269,6 @@ function initGame() {
   mistakesLeft = 4;
   gameOver = false;
   
-  // Interface visibility clean setups
   document.getElementById("submitBtn").style.display = "inline-block";
   document.getElementById("deselectBtn").style.display = "inline-block";
   document.getElementById("nextBtn").style.display = "none";
@@ -235,20 +280,17 @@ function initGame() {
   draw();
 }
 
-// Generates a whole new set and boots it up
 function nextPuzzle() {
   generateDynamicPuzzle();
   initGame();
 }
 
-// Restarts your exact current puzzle board state if you fail
 function retryCurrentPuzzle() {
   initGame();
 }
 
 /* DRAW RENDERING LAYER */
 function draw(){
-  // 1. Render Solved Rows at top
   const solvedContainer = document.getElementById("solvedContainer");
   solvedContainer.innerHTML = "";
   
@@ -259,7 +301,6 @@ function draw(){
     solvedContainer.appendChild(row);
   });
 
-  // 2. Render Remaining Interactive Active Words Grid
   let gridHTML = "";
   activeWords.forEach(word => {
     let cls = "word";
@@ -268,7 +309,6 @@ function draw(){
   });
   document.getElementById("grid").innerHTML = gridHTML;
 
-  // 3. Render Mistakes/Lives indicator
   let livesHTML = "Mistakes Remaining: ";
   for(let i=0; i<4; i++) {
     livesHTML += `<span class="dot ${i >= mistakesLeft ? 'lost' : ''}"></span>`;
@@ -308,7 +348,6 @@ function submitGroup(){
     return;
   }
 
-  // Look for exact matches against valid structural categories
   let matchedGroup = puzzle.groups.find(group => 
     group.words.every(w => selected.includes(w))
   );
@@ -338,7 +377,6 @@ function submitGroup(){
     }
   }
 
-  // Handle mistake states
   mistakesLeft--;
   msg.textContent = "Not quite a matching group. Try again!";
   msg.style.color = "#a11";
@@ -357,7 +395,6 @@ function submitGroup(){
   draw();
 }
 
-// Global Execution Spark
 generateDynamicPuzzle();
 initGame();
 
