@@ -109,9 +109,18 @@ button{
   font-weight: bold;
   cursor:pointer;
 }
+button:disabled {
+  background: #ccc !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 button.secondary {
   background: #e5e5e5;
   color: #333;
+}
+button.next-btn {
+  background: #b5e37d;
+  color: #222;
 }
 
 .message{
@@ -136,8 +145,10 @@ button.secondary {
   <div class="lives" id="lives"></div>
 
   <div class="actions">
-    <button onclick="submitGroup()">Submit Group</button>
-    <button class="secondary" onclick="deselectAll()">Deselect All</button>
+    <button id="submitBtn" onclick="submitGroup()">Submit Group</button>
+    <button id="deselectBtn" class="secondary" onclick="deselectAll()">Deselect All</button>
+    <button id="nextBtn" class="next-btn" onclick="nextPuzzle()" style="display: none;">Next Puzzle</button>
+    <button id="retryBtn" class="next-btn" onclick="retryCurrentPuzzle()" style="display: none;">Try Again</button>
   </div>
 
   <div class="message" id="message"></div>
@@ -147,47 +158,64 @@ button.secondary {
 <script>
 
 /* ===================================================================
-   TRICKY OVERLAPPING PUZZLES
+   THE INFINITE MASTER CATEGORY LIBRARY
    =================================================================== */
-const puzzles = [
-  {
-    // Puzzle 1: Overlaps with things you drive, things with keys, and colors
-    groups: [
-      { name: "Colors", words: ["RED", "BLUE", "GREEN", "ORANGE"] },
-      { name: "Fruits", words: ["APPLE", "BANANA", "PEACH", "CHERRY"] }, // Note: Orange could go here!
-      { name: "Musical Instruments", words: ["PIANO", "ORGAN", "FLUTE", "DRUM"] },
-      { name: "Things with keys", words: ["KEYBOARD", "LOCK", "MAP", "CHORD"] } // Note: Piano & Organ have keys!
-    ]
-  },
-  {
-    // Puzzle 2: Overlaps with animals, dog traits, and actions
-    groups: [
-      { name: "Types of Shoes", words: ["BOOT", "PUMP", "LOAFER", "SNEAKER"] },
-      { name: "Things that pump", words: ["HEART", "BICYCLE", "GAS STATION", "IRON"] }, // Note: Pump can fit here!
-      { name: "Insects", words: ["ANT", "FLEA", "BEETLE", "CRICKET"] },
-      { name: "Games played with a ball", words: ["SOCCER", "TENNIS", "GOLF", "POOL"] } // Note: Cricket is a game!
-    ]
-  }
+const masterCategories = [
+  { name: "Colors", words: ["RED", "BLUE", "GREEN", "ORANGE"] },
+  { name: "Fruits", words: ["APPLE", "BANANA", "PEACH", "CHERRY"] },
+  { name: "Musical Instruments", words: ["PIANO", "ORGAN", "FLUTE", "DRUM"] },
+  { name: "Things with keys", words: ["KEYBOARD", "LOCK", "MAP", "CHORD"] },
+  { name: "Types of Shoes", words: ["BOOT", "PUMP", "LOAFER", "SNEAKER"] },
+  { name: "Things that pump", words: ["HEART", "BICYCLE", "GAS STATION", "IRON"] },
+  { name: "Insects", words: ["ANT", "FLEA", "BEETLE", "CRICKET"] },
+  { name: "Games with a ball", words: ["SOCCER", "TENNIS", "GOLF", "POOL"] },
+  { name: "Tree Varieties", words: ["OAK", "PINE", "MAPLE", "CEDAR"] },
+  { name: "Kitchen Utensils", words: ["SPOON", "FORK", "KNIFE", "WHISK"] },
+  { name: "Weather Phenomena", words: ["RAIN", "SNOW", "HAIL", "SLEET"] },
+  { name: "Capital Cities", words: ["PARIS", "LONDON", "TOKYO", "ROME"] },
+  { name: "Types of Furniture", words: ["CHAIR", "TABLE", "COUCH", "DESK"] },
+  { name: "Precious Gems", words: ["DIAMOND", "RUBY", "EMERALD", "SAPPHIRE"] },
+  { name: "Types of Metal", words: ["GOLD", "SILVER", "COPPER", "IRON"] },
+  { name: "Card Suits", words: ["HEART", "DIAMOND", "CLUB", "SPADE"] },
+  { name: "String Instruments", words: ["VIOLIN", "CELLO", "GUITAR", "HARP"] },
+  { name: "Things that fly", words: ["BIRD", "PLANE", "KITE", "ROCKET"] },
+  { name: "Liquid Measures", words: ["OUNCE", "CUP", "PINT", "QUART"] },
+  { name: "Types of Houses", words: ["CABIN", "CONDO", "MANSION", "COTTAGE"] },
+  { name: "Parts of a Book", words: ["COVER", "PAGE", "CHAPTER", "INDEX"] }
 ];
 
 /* GAME STATE */
-let puzzle;
+let puzzle = { groups: [] };
 let activeWords = [];
 let selected = [];
 let solvedGroups = [];
 let mistakesLeft = 4;
 let gameOver = false;
 
-function initGame() {
-  puzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+// Generates a completely new randomized puzzle configuration on the fly
+function generateDynamicPuzzle() {
+  // Shallow copy the array so we don't alter the original bank
+  let pool = [...masterCategories];
+  let selectedGroups = [];
   
-  // Flatten words out of their structural objects
+  // Pull 4 random, distinct category blocks out of the bank
+  for (let i = 0; i < 4; i++) {
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    selectedGroups.push(pool[randomIndex]);
+    pool.splice(randomIndex, 1); // Remove it so we don't select duplicates
+  }
+  
+  puzzle = { groups: selectedGroups };
+}
+
+function initGame() {
+  // Map out dynamic words
   activeWords = [];
   puzzle.groups.forEach(g => {
     g.words.forEach(w => activeWords.push(w));
   });
   
-  // Shuffle layout
+  // Shuffle layout smoothly
   activeWords.sort(() => Math.random() - 0.5);
   
   selected = [];
@@ -195,10 +223,27 @@ function initGame() {
   mistakesLeft = 4;
   gameOver = false;
   
+  // Interface visibility clean setups
+  document.getElementById("submitBtn").style.display = "inline-block";
+  document.getElementById("deselectBtn").style.display = "inline-block";
+  document.getElementById("nextBtn").style.display = "none";
+  document.getElementById("retryBtn").style.display = "none";
+  
   document.getElementById("message").textContent = "";
   document.getElementById("message").style.color = "#333";
   
   draw();
+}
+
+// Generates a whole new set and boots it up
+function nextPuzzle() {
+  generateDynamicPuzzle();
+  initGame();
+}
+
+// Restarts your exact current puzzle board state if you fail
+function retryCurrentPuzzle() {
+  initGame();
 }
 
 /* DRAW RENDERING LAYER */
@@ -269,11 +314,9 @@ function submitGroup(){
   );
 
   if(matchedGroup) {
-    // Check if this specific group wasn't already pulled out
     if(!solvedGroups.some(g => g.name === matchedGroup.name)) {
       solvedGroups.push(matchedGroup);
       
-      // Filter linked words out of active active grid array
       activeWords = activeWords.filter(w => !selected.includes(w));
       selected = [];
       
@@ -282,7 +325,12 @@ function submitGroup(){
 
       if(solvedGroups.length === 4){
         gameOver = true;
-        msg.innerHTML = `🎉 Perfect Score! You solved it!<br><br><button onclick="initGame()">Play Next Puzzle</button>`;
+        msg.textContent = "🎉 Perfect Score! You solved it!";
+        msg.style.color = "#146c2e";
+        
+        document.getElementById("submitBtn").style.display = "none";
+        document.getElementById("deselectBtn").style.display = "none";
+        document.getElementById("nextBtn").style.display = "inline-block";
       }
       
       draw();
@@ -290,7 +338,7 @@ function submitGroup(){
     }
   }
 
-  // If match logic fails completely: punish strike count
+  // Handle mistake states
   mistakesLeft--;
   msg.textContent = "Not quite a matching group. Try again!";
   msg.style.color = "#a11";
@@ -298,13 +346,19 @@ function submitGroup(){
 
   if(mistakesLeft <= 0) {
     gameOver = true;
-    msg.innerHTML = `❌ Game Over! Better luck next time.<br><br><button onclick="initGame()">Try Again</button>`;
+    msg.textContent = "❌ Game Over! Better luck next time.";
+    msg.style.color = "#a11";
+    
+    document.getElementById("submitBtn").style.display = "none";
+    document.getElementById("deselectBtn").style.display = "none";
+    document.getElementById("retryBtn").style.display = "inline-block";
   }
 
   draw();
 }
 
-// Global Launch Setup Execution
+// Global Execution Spark
+generateDynamicPuzzle();
 initGame();
 
 </script>
