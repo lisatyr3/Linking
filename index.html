@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Find the Link</title>
+<title>Daily Find the Link</title>
 
 <style>
 body{
@@ -116,9 +116,12 @@ button.secondary {
   background: #e5e5e5;
   color: #333;
 }
-button.next-btn {
-  background: #b5e37d;
-  color: #222;
+
+.countdown-box {
+  margin-top: 15px;
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: bold;
 }
 
 .message{
@@ -145,11 +148,11 @@ button.next-btn {
   <div class="actions">
     <button id="submitBtn" onclick="submitGroup()">Submit Group</button>
     <button id="deselectBtn" class="secondary" onclick="deselectAll()">Deselect All</button>
-    <button id="nextBtn" class="next-btn" onclick="nextPuzzle()" style="display: none;">Next Puzzle</button>
-    <button id="retryBtn" class="next-btn" onclick="retryCurrentPuzzle()" style="display: none;">Try Again</button>
+    <button id="retryBtn" class="secondary" onclick="initGame()" style="display: none;">Try Again</button>
   </div>
 
   <div class="message" id="message"></div>
+  <div id="countdownBox" class="countdown-box" style="display: none;">Next Daily Puzzle in: <span id="countdownTimer">00:00:00</span></div>
 
 </div>
 
@@ -159,7 +162,6 @@ button.next-btn {
    THE MASSIVE INFINITE MASTER CATEGORY LIBRARY (71 TOTAL)
    =================================================================== */
 const masterCategories = [
-  // --- ORIGINAL 21 CATEGORIES ---
   { name: "Colors", words: ["RED", "BLUE", "GREEN", "ORANGE"] },
   { name: "Fruits", words: ["APPLE", "BANANA", "PEACH", "CHERRY"] },
   { name: "Musical Instruments", words: ["PIANO", "ORGAN", "FLUTE", "DRUM"] },
@@ -181,8 +183,6 @@ const masterCategories = [
   { name: "Liquid Measures", words: ["OUNCE", "CUP", "PINT", "QUART"] },
   { name: "Types of Houses", words: ["CABIN", "CONDO", "MANSION", "COTTAGE"] },
   { name: "Parts of a Book", words: ["COVER", "PAGE", "CHAPTER", "INDEX"] },
-
-  // --- NEW SNEAKY OVERLAPPING ADDITIONS (50 MORE) ---
   { name: "Candy Bars", words: ["MARS", "CRUNCH", "BOUNTY", "BAR"] },
   { name: "Places to get a drink", words: ["BAR", "PUB", "TAVERN", "SALOON"] },
   { name: "Things with a shell", words: ["TURTLE", "SNAIL", "EGG", "NUT"] },
@@ -235,6 +235,19 @@ const masterCategories = [
   { name: "Fire starters", words: ["MATCH", "FLINT", "SPARK", "WOOD"] }
 ];
 
+/* SEED-BASED RANDOM SYSTEM (FOR DAILY UNIQUENESS) */
+function getSeedForToday() {
+  const d = new Date();
+  // Formulates a stable numerical ID string out of the Year, Month, and Calendar Date
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+// A stable random number generator based on a seed value
+function seedRandom(seed) {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
 /* GAME STATE */
 let puzzle = { groups: [] };
 let activeWords = [];
@@ -242,13 +255,17 @@ let selected = [];
 let solvedGroups = [];
 let mistakesLeft = 4;
 let gameOver = false;
+let countdownInterval = null;
 
-function generateDynamicPuzzle() {
+function generateDailyPuzzle() {
+  let todaySeed = getSeedForToday();
   let pool = [...masterCategories];
   let selectedGroups = [];
   
+  // Pick 4 completely identical groups for anyone loading on this exact date calendar line
   for (let i = 0; i < 4; i++) {
-    const randomIndex = Math.floor(Math.random() * pool.length);
+    const pseudoRandomValue = seedRandom(todaySeed + i);
+    const randomIndex = Math.floor(pseudoRandomValue * pool.length);
     selectedGroups.push(pool[randomIndex]);
     pool.splice(randomIndex, 1); 
   }
@@ -262,7 +279,12 @@ function initGame() {
     g.words.forEach(w => activeWords.push(w));
   });
   
-  activeWords.sort(() => Math.random() - 0.5);
+  // Shuffling uses a secondary seed variations layout sequence so the layout is universally uniform today
+  let shuffleSeed = getSeedForToday() + 42;
+  activeWords.sort(() => {
+    const r = seedRandom(shuffleSeed++);
+    return r - 0.5;
+  });
   
   selected = [];
   solvedGroups = [];
@@ -271,22 +293,15 @@ function initGame() {
   
   document.getElementById("submitBtn").style.display = "inline-block";
   document.getElementById("deselectBtn").style.display = "inline-block";
-  document.getElementById("nextBtn").style.display = "none";
   document.getElementById("retryBtn").style.display = "none";
+  document.getElementById("countdownBox").style.display = "none";
   
   document.getElementById("message").textContent = "";
   document.getElementById("message").style.color = "#333";
   
+  if (countdownInterval) clearInterval(countdownInterval);
+  
   draw();
-}
-
-function nextPuzzle() {
-  generateDynamicPuzzle();
-  initGame();
-}
-
-function retryCurrentPuzzle() {
-  initGame();
 }
 
 /* DRAW RENDERING LAYER */
@@ -336,6 +351,34 @@ function deselectAll() {
   draw();
 }
 
+/* TIMEOUT COUNTDOWN INTERFACE RUNNER */
+function startMidnightCountdown() {
+  document.getElementById("countdownBox").style.display = "block";
+  const timerDisplay = document.getElementById("countdownTimer");
+  
+  function updateTimer() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0); // Sets exactly to upcoming midnight point
+    
+    const diff = midnight - now;
+    if (diff <= 0) {
+      clearInterval(countdownInterval);
+      window.location.reload(); // Instantly hot-reloads the page when midnight ticks
+      return;
+    }
+    
+    let h = Math.floor(diff / (1000 * 60 * 60));
+    let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    let s = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    timerDisplay.textContent = `${h < 10 ? '0' : ''}${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+  
+  updateTimer();
+  countdownInterval = setInterval(updateTimer, 1000);
+}
+
 /* MATCH SUBMIT LOGIC ENGINE */
 function submitGroup(){
   if(gameOver) return;
@@ -364,12 +407,12 @@ function submitGroup(){
 
       if(solvedGroups.length === 4){
         gameOver = true;
-        msg.textContent = "🎉 Perfect Score! You solved it!";
+        msg.textContent = "🎉 Perfect Score! You solved today's puzzle!";
         msg.style.color = "#146c2e";
         
         document.getElementById("submitBtn").style.display = "none";
         document.getElementById("deselectBtn").style.display = "none";
-        document.getElementById("nextBtn").style.display = "inline-block";
+        startMidnightCountdown();
       }
       
       draw();
@@ -384,18 +427,20 @@ function submitGroup(){
 
   if(mistakesLeft <= 0) {
     gameOver = true;
-    msg.textContent = "❌ Game Over! Better luck next time.";
+    msg.textContent = "❌ Game Over! Try again to solve today's link.";
     msg.style.color = "#a11";
     
     document.getElementById("submitBtn").style.display = "none";
     document.getElementById("deselectBtn").style.display = "none";
     document.getElementById("retryBtn").style.display = "inline-block";
+    startMidnightCountdown();
   }
 
   draw();
 }
 
-generateDynamicPuzzle();
+// Spark First Load Config State Instantly
+generateDailyPuzzle();
 initGame();
 
 </script>
