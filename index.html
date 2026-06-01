@@ -1,161 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Find the Link</title>
-
-<style>
-body{
-  font-family: system-ui, -apple-system, sans-serif;
-  background:#f3f4f4;
-  padding:16px;
-  margin:0;
-}
-
-.wrap{
-  max-width: 550px;
-  margin: auto;
-  background: white;
-  padding: 24px;
-  border-radius: 24px;
-  box-shadow: 0 4px 15px rgba(0,0,0,.08);
-  text-align: center;
-}
-
-h1 { color: #2d8a78; margin: 0 0 4px; }
-.sub { color: #666; margin: 0 0 20px; font-size: 0.95rem; }
-
-.solved-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.solved-row {
-  padding: 16px;
-  border-radius: 10px;
-  color: white;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-}
-.tier-0 { background: #fbd043; color: #222; } 
-.tier-1 { background: #b5e37d; color: #222; } 
-.tier-2 { background: #b0c4de; color: #222; } 
-.tier-3 { background: #ba93df; color: #fff; } 
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4, 1fr);
-  gap:10px;
-}
-
-.word{
-  aspect-ratio: 1 / 1;
-  background:#efefe3;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  word-break: break-word;
-  user-select: none;
-  transition: all 0.1s ease;
-}
-
-.word:hover { background: #e2e2d5; }
-
-.selected{
-  background:#5a5d64 !important;
-  color:white;
-}
-
-.lives {
-  margin: 18px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-.dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background: #2d8a78;
-  border-radius: 50%;
-  margin: 0 3px;
-}
-.dot.lost { background: #ddd; }
-
-.actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-button{
-  padding:12px 20px;
-  border:none;
-  border-radius:24px;
-  background:#2d8a78;
-  color:white;
-  font-size:15px;
-  font-weight: bold;
-  cursor:pointer;
-}
-button:disabled {
-  background: #ccc !important;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-button.secondary {
-  background: #e5e5e5;
-  color: #333;
-}
-
-.countdown-box {
-  margin-top: 15px;
-  font-size: 0.95rem;
-  color: #666;
-  font-weight: bold;
-}
-
-.message{
-  margin-top:20px;
-  font-weight:bold;
-  font-size:16px;
-  min-height: 24px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="wrap">
-
-  <h1>Find the Link</h1>
-  <p class="sub">Group words into 4 sets of 4 interconnected items!</p>
-
-  <div id="solvedContainer" class="solved-container"></div>
-  <div class="grid" id="grid"></div>
-
-  <div class="lives" id="lives"></div>
-
-  <div class="actions">
-    <button id="submitBtn" onclick="submitGroup()">Submit Group</button>
-    <button id="deselectBtn" class="secondary" onclick="deselectAll()">Deselect All</button>
-    <button id="retryBtn" class="secondary" onclick="initGame()" style="display: none;">Try Again</button>
-  </div>
-
-  <div class="message" id="message"></div>
-  <div id="countdownBox" class="countdown-box" style="display: none;">Next Daily Puzzle in: <span id="countdownTimer">00:00:00</span></div>
-
-</div>
-
 <script>
 
 /* ===================================================================
@@ -238,11 +80,9 @@ const masterCategories = [
 /* SEED-BASED RANDOM SYSTEM (FOR DAILY UNIQUENESS) */
 function getSeedForToday() {
   const d = new Date();
-  // Formulates a stable numerical ID string out of the Year, Month, and Calendar Date
   return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
 
-// A stable random number generator based on a seed value
 function seedRandom(seed) {
   const x = Math.sin(seed++) * 10000;
   return x - Math.floor(x);
@@ -250,8 +90,8 @@ function seedRandom(seed) {
 
 /* GAME STATE */
 let puzzle = { groups: [] };
-let activeWords = [];
-let selected = [];
+let activeWords = []; // Will now hold objects: { id: uniqueString, text: "PIE" }
+let selectedIds = [];  // Track selections by unique ID instead of raw text string
 let solvedGroups = [];
 let mistakesLeft = 4;
 let gameOver = false;
@@ -262,7 +102,6 @@ function generateDailyPuzzle() {
   let pool = [...masterCategories];
   let selectedGroups = [];
   
-  // Pick 4 completely identical groups for anyone loading on this exact date calendar line
   for (let i = 0; i < 4; i++) {
     const pseudoRandomValue = seedRandom(todaySeed + i);
     const randomIndex = Math.floor(pseudoRandomValue * pool.length);
@@ -275,18 +114,24 @@ function generateDailyPuzzle() {
 
 function initGame() {
   activeWords = [];
-  puzzle.groups.forEach(g => {
-    g.words.forEach(w => activeWords.push(w));
+  
+  // Assign an explicitly unique ID to every single card instance generated
+  puzzle.groups.forEach((g, gIdx) => {
+    g.words.forEach((w, wIdx) => {
+      activeWords.push({
+        id: `g${gIdx}-w${wIdx}`, // Unique ID e.g., "g0-w1"
+        text: w
+      });
+    });
   });
   
-  // Shuffling uses a secondary seed variations layout sequence so the layout is universally uniform today
   let shuffleSeed = getSeedForToday() + 42;
   activeWords.sort(() => {
     const r = seedRandom(shuffleSeed++);
     return r - 0.5;
   });
   
-  selected = [];
+  selectedIds = [];
   solvedGroups = [];
   mistakesLeft = 4;
   gameOver = false;
@@ -317,10 +162,11 @@ function draw(){
   });
 
   let gridHTML = "";
-  activeWords.forEach(word => {
+  activeWords.forEach(item => {
     let cls = "word";
-    if(selected.includes(word)) cls += " selected";
-    gridHTML += `<div class="${cls}" onclick="toggle('${word}')">${word}</div>`;
+    if(selectedIds.includes(item.id)) cls += " selected";
+    // Pass the unique id to the toggle function instead of raw text
+    gridHTML += `<div class="${cls}" onclick="toggle('${item.id}')">${item.text}</div>`;
   });
   document.getElementById("grid").innerHTML = gridHTML;
 
@@ -332,14 +178,14 @@ function draw(){
 }
 
 /* TRACK SELECTION STATES */
-function toggle(word){
+function toggle(id){
   if(gameOver) return;
 
-  if(selected.includes(word)){
-    selected = selected.filter(w => w !== word);
+  if(selectedIds.includes(id)){
+    selectedIds = selectedIds.filter(i => i !== id);
   } else {
-    if(selected.length < 4){
-      selected.push(word);
+    if(selectedIds.length < 4){
+      selectedIds.push(id);
     }
   }
   draw();
@@ -347,7 +193,7 @@ function toggle(word){
 
 function deselectAll() {
   if(gameOver) return;
-  selected = [];
+  selectedIds = [];
   draw();
 }
 
@@ -359,12 +205,12 @@ function startMidnightCountdown() {
   function updateTimer() {
     const now = new Date();
     const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0); // Sets exactly to upcoming midnight point
+    midnight.setHours(24, 0, 0, 0);
     
     const diff = midnight - now;
     if (diff <= 0) {
       clearInterval(countdownInterval);
-      window.location.reload(); // Instantly hot-reloads the page when midnight ticks
+      window.location.reload();
       return;
     }
     
@@ -386,21 +232,27 @@ function submitGroup(){
   const msg = document.getElementById("message");
   msg.style.color = "#333";
 
-  if(selected.length !== 4){
+  if(selectedIds.length !== 4){
     msg.textContent = "Select exactly 4 words!";
     return;
   }
 
+  // Map chosen IDs back to their respective raw string values for validation check
+  const selectedWords = selectedIds.map(id => {
+    return activeWords.find(item => item.id === id).text;
+  });
+
   let matchedGroup = puzzle.groups.find(group => 
-    group.words.every(w => selected.includes(w))
+    group.words.every(w => selectedWords.includes(w))
   );
 
   if(matchedGroup) {
     if(!solvedGroups.some(g => g.name === matchedGroup.name)) {
       solvedGroups.push(matchedGroup);
       
-      activeWords = activeWords.filter(w => !selected.includes(w));
-      selected = [];
+      // Remove only the exact selected IDs from active list
+      activeWords = activeWords.filter(item => !selectedIds.includes(item.id));
+      selectedIds = [];
       
       msg.textContent = "Awesome match found!";
       msg.style.color = "#146c2e";
@@ -423,7 +275,7 @@ function submitGroup(){
   mistakesLeft--;
   msg.textContent = "Not quite a matching group. Try again!";
   msg.style.color = "#a11";
-  selected = [];
+  selectedIds = [];
 
   if(mistakesLeft <= 0) {
     gameOver = true;
@@ -439,10 +291,7 @@ function submitGroup(){
   draw();
 }
 
-// Spark First Load Config State Instantly
 generateDailyPuzzle();
 initGame();
 
 </script>
-</body>
-</html>
